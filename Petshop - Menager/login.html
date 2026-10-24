@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetShop Manager - Acesso e Cadastro de Pet Shops</title>
+    <meta name="description" content="Acesse ou crie a conta do seu pet shop na plataforma PetShop Manager. Gestão completa com isolamento de dados e segurança.">
+    <meta property="og:title" content="PetShop Manager - Acesso e Cadastro de Pet Shops">
+    <meta property="og:description" content="Plataforma SaaS de gestão para pet shops, banho e tosa, PDV e controle financeiro.">
+    <meta property="og:type" content="website">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1E3A5F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="PetShop">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
+</head>
+<body data-page="login" style="margin:0; padding:0; background:#f8fafe;">
+
+    <div class="auth-wrapper">
+        <!-- Coluna da Esquerda: Apresentação da Plataforma -->
+        <div class="auth-hero">
+            <div class="auth-hero-brand">
+                <span class="logo-icon" onclick="registrarCliqueSecretoLogo()" style="cursor:pointer;" title="PetShop Manager">🐾</span>
+                <div>
+                    <h1>PetShop Manager</h1>
+                    <span>Plataforma de Gestão SaaS</span>
+                </div>
+            </div>
+
+            <div class="auth-hero-content">
+                <div class="auth-hero-title">
+                    Tudo o que seu Pet Shop precisa em <span>um só lugar</span>.
+                </div>
+                <p class="auth-hero-desc">
+                    A plataforma completa e intuitiva feita sob medida para donos de pet shops, tosadores e atendentes. Cada pet shop possui seu próprio banco de dados isolado e seguro.
+                </p>
+
+                <div class="auth-features-list">
+                    <div class="auth-feature-item">
+                        <i data-lucide="kanban"></i>
+                        <span>Fila Operacional de Banho & Tosa com Kanban</span>
+                    </div>
+                    <div class="auth-feature-item">
+                        <i data-lucide="message-circle"></i>
+                        <span>Avisos e cobranças no WhatsApp com 1 clique</span>
+                    </div>
+                    <div class="auth-feature-item">
+                        <i data-lucide="printer"></i>
+                        <span>Impressão de Fichas de Baia/Gaiola e Etiquetas de Gôndola</span>
+                    </div>
+                    <div class="auth-feature-item">
+                        <i data-lucide="scale"></i>
+                        <span>Fracionamento de Ração a Granel e Controle de Validades</span>
+                    </div>
+                    <div class="auth-feature-item">
+                        <i data-lucide="shield-check"></i>
+                        <span>Dados 100% isolados, seguros e com backups automáticos</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="font-size: 0.8rem; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+                © 2026 PetShop Manager • Sistema em Nuvem para Pet Shops
+            </div>
+        </div>
+
+        <!-- Coluna da Direita: Card de Login e Cadastro -->
+        <div class="auth-card-container">
+            <div class="auth-card">
+                <!-- Abas: Entrar / Cadastrar -->
+                <div class="auth-tabs">
+                    <button class="auth-tab-btn active" id="tab-btn-login" onclick="alternarAbaAuth('login')">
+                        Acessar Minha Conta
+                    </button>
+                    <button class="auth-tab-btn" id="tab-btn-cadastro" onclick="alternarAbaAuth('cadastro')">
+                        Cadastrar Meu Pet Shop
+                    </button>
+                </div>
+
+                <!-- FORMULÁRIO 1: LOGIN -->
+                <div id="auth-pane-login">
+                    <div style="margin-bottom: 1.5rem;">
+                        <h2 style="font-size: 1.4rem; color: #1E3A5F; margin-bottom: 0.25rem;">Bem-vindo(a) de volta!</h2>
+                        <p class="text-muted" style="font-size: 0.88rem;">Informe seu e-mail e senha para acessar o painel do seu pet shop.</p>
+                    </div>
+
+                    <form id="form-login" onsubmit="handleLoginSubmit(event)">
+                        <div class="form-group">
+                            <label for="login-email">E-mail Cadastrado</label>
+                            <input type="email" id="login-email" placeholder="seu-email@petshop.com" required autocomplete="email">
+                        </div>
+
+                        <div class="form-group">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <label for="login-senha" style="margin-bottom:0;">Senha</label>
+                            </div>
+                            <input type="password" id="login-senha" placeholder="Digite sua senha" required autocomplete="current-password">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.8rem; font-size: 1rem; margin-top: 0.5rem;">
+                            <i data-lucide="log-in"></i> Entrar no Sistema
+                        </button>
+                    </form>
+                </div>
+
+                <!-- FORMULÁRIO 2: CADASTRO DE NOVO PET SHOP -->
+                <div id="auth-pane-cadastro" style="display: none;">
+                    <div style="margin-bottom: 1.25rem;">
+                        <h2 style="font-size: 1.4rem; color: #1E3A5F; margin-bottom: 0.25rem;">Cadastre seu Pet Shop</h2>
+                        <p class="text-muted" style="font-size: 0.88rem;">Crie seu espaço exclusivo. Seu banco de dados será gerado imediatamente.</p>
+                    </div>
+
+                    <form id="form-cadastro" onsubmit="handleCadastroSubmit(event)">
+                        <div class="form-group">
+                            <label for="cad-nome-loja">Nome do seu Pet Shop *</label>
+                            <input type="text" id="cad-nome-loja" placeholder="Ex: Pet Shop Patinhas de Amor" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="cad-responsavel">Seu Nome *</label>
+                                <input type="text" id="cad-responsavel" placeholder="Ex: Roberto Silva" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="cad-telefone">WhatsApp da Loja *</label>
+                                <input type="text" id="cad-telefone" placeholder="(11) 99999-9999" required oninput="formatarTelefoneInput(this)">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cad-email">E-mail de Acesso *</label>
+                            <input type="email" id="cad-email" placeholder="contato@seupetshop.com" required autocomplete="email">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="cad-senha">Senha *</label>
+                                <input type="password" id="cad-senha" placeholder="Mínimo 4 caracteres" required autocomplete="new-password">
+                            </div>
+                            <div class="form-group">
+                                <label for="cad-confirma-senha">Confirmar Senha *</label>
+                                <input type="password" id="cad-confirma-senha" placeholder="Repita a senha" required autocomplete="new-password">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top:0.25rem;">
+                            <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:#475569; cursor:pointer;">
+                                <input type="checkbox" id="cad-com-exemplos" checked style="width:16px; height:16px;">
+                                Inicializar com serviços, categorias e produtos padrão
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.8rem; font-size: 1rem; margin-top: 0.5rem; background:#16a34a; border-color:#16a34a;">
+                            <i data-lucide="check-circle-2"></i> Criar Conta & Acessar Meu Pet Shop
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Rodapé de Segurança e Contato do Desenvolvedor -->
+                <div style="margin-top: 1.5rem; text-align: center; font-size: 0.78rem; color: #94a3b8; display:flex; align-items:center; justify-content:center; gap:0.4rem;">
+                    <i data-lucide="lock" style="width: 14px; height: 14px;"></i>
+                    Ambiente Seguro • Banco de Dados Isolado
+                </div>
+
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; text-align: center;">
+                    <button type="button" onclick="abrirModalSuporteDesenvolvedor()" style="background: none; border: none; color: #2563eb; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.75rem; border-radius: 6px;" title="Suporte técnico, comercial e parcerias">
+                        <i data-lucide="headset" style="width: 15px; height: 15px;"></i>
+                        <span>Fale com o Desenvolvedor / Suporte Comercial</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container de Toast -->
+    <div id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="js/app.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>

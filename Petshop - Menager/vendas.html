@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetShop Manager - Vendas (PDV)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1E3A5F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="PetShop">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
+    <style>
+        /* Estilos complementares específicos do PDV */
+        .pdv-filters {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .pdv-category-select {
+            padding: 0.55rem 0.85rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            outline: none;
+            font-size: 0.9rem;
+            min-width: 180px;
+        }
+
+        .product-card-pdv.out-of-stock {
+            opacity: 0.55;
+            cursor: not-allowed;
+            border-color: transparent !important;
+            background: #fcfcfd;
+        }
+
+        .product-card-pdv.out-of-stock:hover {
+            box-shadow: var(--shadow-sm);
+        }
+
+        .product-card-pdv .product-sku {
+            font-size: 0.7rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.2rem;
+        }
+
+        .cart-client-group {
+            padding: 1rem 1.5rem 0.5rem;
+            border-bottom: 1px solid var(--border-light);
+            background: #fafcff;
+        }
+
+        .cart-client-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.35rem;
+        }
+
+        .cart-client-select {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            background: #fff;
+            outline: none;
+        }
+
+        .cart-discount-row {
+            display: grid;
+            grid-template-columns: 1fr 100px;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .cart-discount-input {
+            padding: 0.45rem 0.65rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            outline: none;
+            width: 100%;
+        }
+
+        .cart-discount-type {
+            padding: 0.45rem 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            outline: none;
+            background: #fff;
+        }
+
+        .cart-line-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .cart-line-item strong {
+            color: var(--text-primary);
+        }
+
+        .troco-box {
+            background: var(--info-light);
+            padding: 0.65rem 0.85rem;
+            border-radius: var(--radius-sm);
+            margin-top: 0.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.85rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        /* Comprovante / Cupom Não Fiscal */
+        .receipt-card {
+            background: #fff;
+            padding: 1.5rem;
+            font-family: 'Courier New', Courier, monospace;
+            color: #111;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            border: 1px dashed #ccc;
+            border-radius: var(--radius-sm);
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .receipt-header {
+            text-align: center;
+            border-bottom: 1px dashed #aaa;
+            padding-bottom: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .receipt-header h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #1E3A5F;
+            margin-bottom: 0.2rem;
+        }
+
+        .receipt-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0.75rem 0;
+            font-size: 0.82rem;
+        }
+
+        .receipt-table th {
+            text-align: left;
+            border-bottom: 1px dashed #aaa;
+            padding: 0.3rem 0;
+        }
+
+        .receipt-table td {
+            padding: 0.35rem 0;
+            vertical-align: top;
+        }
+
+        .receipt-footer {
+            border-top: 1px dashed #aaa;
+            padding-top: 0.75rem;
+            margin-top: 0.75rem;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        /* Impressão exclusiva do comprovante */
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            #printable-receipt, #printable-receipt * {
+                visibility: visible !important;
+            }
+            #printable-receipt {
+                position: absolute !important;
+                left: 50% !important;
+                top: 0 !important;
+                transform: translateX(-50%) !important;
+                width: 380px !important;
+                margin: 0 !important;
+                padding: 10px !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+            .modal-overlay {
+                position: static !important;
+                background: none !important;
+                display: block !important;
+                padding: 0 !important;
+            }
+            .modal {
+                box-shadow: none !important;
+                max-width: 100% !important;
+                border: none !important;
+                background: transparent !important;
+            }
+            .modal-header, .modal-footer {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body data-page="vendas">
+    <!-- Sidebar é injetada por app.js -->
+    <nav class="sidebar" id="sidebar"></nav>
+    
+    <div class="main-wrapper">
+        <!-- Header é injetado por app.js -->
+        <header class="header" id="header"></header>
+        
+        <main class="content">
+            <!-- Cabeçalho da Página -->
+            <div class="page-header">
+                <div>
+                    <h1>Vendas (PDV)</h1>
+                    <p class="text-muted" style="margin-top: 0.25rem;">Frente de caixa rápida, emissão de comprovantes e controle de vendas</p>
+                </div>
+                <div class="actions">
+                    <div class="badge badge-info" id="badge-total-vendas-hoje" style="padding: 0.5rem 0.85rem; font-size: 0.85rem;">
+                        <i data-lucide="shopping-bag" style="width: 16px; height: 16px; margin-right: 0.35rem;"></i>
+                        <span id="stat-vendas-hoje">0 vendas hoje</span>
+                    </div>
+                    <div class="badge badge-success" id="badge-faturamento-hoje" style="padding: 0.5rem 0.85rem; font-size: 0.85rem;">
+                        <i data-lucide="dollar-sign" style="width: 16px; height: 16px; margin-right: 0.35rem;"></i>
+                        <span id="stat-faturamento-hoje">R$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navegação por Abas -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="nova-venda" onclick="switchVendasTab('nova-venda')">
+                    <i data-lucide="shopping-cart" style="width: 18px; height: 18px; display: inline-block; vertical-align: middle; margin-right: 0.35rem;"></i>
+                    Nova Venda
+                </button>
+                <button class="tab-btn" data-tab="historico" onclick="switchVendasTab('historico')">
+                    <i data-lucide="clock" style="width: 18px; height: 18px; display: inline-block; vertical-align: middle; margin-right: 0.35rem;"></i>
+                    Histórico de Vendas
+                </button>
+            </div>
+
+            <!-- ABA 1: NOVA VENDA (PDV) -->
+            <div class="tab-pane active" id="tab-nova-venda">
+                <div class="pdv-layout">
+                    <!-- Coluna da Esquerda: Catálogo e Busca de Produtos -->
+                    <div class="pdv-catalog">
+                        <div class="pdv-filters">
+                            <div class="search-bar" style="max-width: 420px;">
+                                <i data-lucide="barcode" style="color:var(--primary);"></i>
+                                <input type="text" id="pdv-search-input" placeholder="Buscar produto ou bipe o Código de Barras / SKU..." oninput="handleProductSearch()" autofocus>
+                            </div>
+                            <div class="filter-group">
+                                <select id="pdv-category-select" class="pdv-category-select" onchange="handleCategoryFilter()">
+                                    <option value="">Todas as Categorias</option>
+                                </select>
+                            </div>
+                            <div style="margin-left: auto; font-size: 0.8rem; color: var(--text-secondary); display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+                                <span>Atalhos:</span>
+                                <span class="kbd-shortcut" title="Focar na busca de produtos">F2 Buscar</span>
+                                <span class="kbd-shortcut" title="Finalizar a venda direto">F4 Finalizar</span>
+                                <span class="kbd-shortcut" title="Limpar carrinho">ESC Limpar</span>
+                            </div>
+                        </div>
+
+                        <!-- Grid de Produtos -->
+                        <div class="pdv-products-grid" id="pdv-products-grid">
+                            <!-- Injetado dinamicamente por vendas.js -->
+                        </div>
+                    </div>
+
+                    <!-- Coluna da Direita: Carrinho de Compras -->
+                    <div class="cart-panel">
+                        <div class="cart-header">
+                            <i data-lucide="shopping-bag" style="color: var(--primary);"></i>
+                            <span>Carrinho de Compras</span>
+                            <span class="badge badge-info" id="cart-items-count" style="margin-left: auto;">0 itens</span>
+                            <button class="btn-icon" onclick="clearCart()" title="Limpar carrinho" style="margin-left: 0.25rem;">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </div>
+
+                        <!-- Seleção Opcional de Cliente -->
+                        <div class="cart-client-group">
+                            <label for="cart-client-select">
+                                <i data-lucide="user" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle; margin-right: 0.25rem;"></i>
+                                Cliente (Opcional):
+                            </label>
+                            <select id="cart-client-select" class="cart-client-select" onchange="handleClientChange()">
+                                <option value="">Cliente Avulso (Não identificado)</option>
+                            </select>
+                        </div>
+
+                        <!-- Lista de Itens do Carrinho -->
+                        <div class="cart-items" id="cart-items-container">
+                            <!-- Injetado dinamicamente -->
+                        </div>
+
+                        <!-- Resumo financeiro do Carrinho -->
+                        <div class="cart-summary">
+                            <div class="cart-line-item">
+                                <span>Subtotal</span>
+                                <strong id="cart-subtotal-display">R$ 0,00</strong>
+                            </div>
+
+                            <!-- Campo de Desconto -->
+                            <div class="form-group" style="margin-bottom: 0.75rem;">
+                                <label style="font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.25rem; display: flex; justify-content: space-between;">
+                                    <span>Desconto</span>
+                                    <span id="cart-discount-calculated" style="color: var(--danger);">- R$ 0,00</span>
+                                </label>
+                                <div class="cart-discount-row">
+                                    <input type="number" id="cart-discount-value" class="cart-discount-input" min="0" step="0.5" value="0" placeholder="0" oninput="handleDiscountChange()">
+                                    <select id="cart-discount-type" class="cart-discount-type" onchange="handleDiscountChange()">
+                                        <option value="percentual">% Porcento</option>
+                                        <option value="valor">R$ Fixo</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Forma de Pagamento -->
+                            <div class="form-group" style="margin-bottom: 0.75rem;">
+                                <label for="cart-payment-method" style="font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.25rem;">
+                                    Forma de Pagamento
+                                </label>
+                                <select id="cart-payment-method" class="form-group" style="margin-bottom: 0; padding: 0.5rem 0.75rem; font-size: 0.9rem;" onchange="handlePaymentMethodChange()">
+                                    <option value="Pix">Pix</option>
+                                    <option value="Dinheiro">Dinheiro</option>
+                                    <option value="Cartão Crédito">Cartão de Crédito</option>
+                                    <option value="Cartão Débito">Cartão de Débito</option>
+                                    <option value="Outro">Outro</option>
+                                </select>
+                            </div>
+
+                            <!-- Bloco de Troco (exibido apenas quando Dinheiro estiver selecionado) -->
+                            <div id="troco-wrapper" style="display: none;">
+                                <div class="form-group" style="margin-bottom: 0.5rem;">
+                                    <label for="cart-received-amount" style="font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.25rem;">
+                                        Valor Recebido em Dinheiro (R$)
+                                    </label>
+                                    <input type="number" id="cart-received-amount" class="cart-discount-input" min="0" step="0.5" placeholder="Ex: 50,00" oninput="handleReceivedAmountChange()">
+                                </div>
+                                <div class="troco-box" id="troco-box">
+                                    Troco a devolver: <strong id="troco-display">R$ 0,00</strong>
+                                </div>
+                            </div>
+
+                            <!-- Total Geral -->
+                            <div class="cart-total" style="margin-top: 1rem;">
+                                <span>Total a Pagar:</span>
+                                <span id="cart-total-display" style="color: var(--primary); font-size: 1.35rem;">R$ 0,00</span>
+                            </div>
+
+                            <!-- Botão de Finalização -->
+                            <button type="button" class="btn btn-primary" id="btn-finalizar-venda" onclick="finalizarVenda()" style="width: 100%; justify-content: center; font-size: 1rem; padding: 0.85rem; font-weight: 600;">
+                                <i data-lucide="check-circle"></i>
+                                Finalizar Venda <span class="kbd-shortcut" style="background:rgba(255,255,255,0.25); color:#fff; border-color:transparent;">F4</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 2: HISTÓRICO DE VENDAS -->
+            <div class="tab-pane" id="tab-historico">
+                <div class="card mb-2" style="padding: 1.25rem;">
+                    <div class="filters" style="margin-bottom: 0;">
+                        <div class="search-bar" style="max-width: 320px;">
+                            <i data-lucide="search"></i>
+                            <input type="text" id="history-search-input" placeholder="Buscar por cliente ou ID da venda..." oninput="handleHistorySearch()">
+                        </div>
+                        <div class="filter-group">
+                            <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 2px;">Data Inicial</label>
+                            <input type="date" id="history-date-start" onchange="handleHistoryDateFilter()">
+                        </div>
+                        <div class="filter-group">
+                            <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 2px;">Data Final</label>
+                            <input type="date" id="history-date-end" onchange="handleHistoryDateFilter()">
+                        </div>
+                        <div class="filter-group">
+                            <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 2px;">Forma de Pagamento</label>
+                            <select id="history-payment-filter" onchange="handleHistoryPaymentFilter()">
+                                <option value="">Todas</option>
+                                <option value="Pix">Pix</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                                <option value="Cartão Crédito">Cartão de Crédito</option>
+                                <option value="Cartão Débito">Cartão de Débito</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+                        <div style="margin-left: auto; display: flex; align-items: flex-end;">
+                            <button class="btn btn-secondary btn-sm" onclick="clearHistoryFilters()">
+                                <i data-lucide="rotate-ccw"></i>
+                                Limpar Filtros
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabela de Histórico de Vendas -->
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data / Hora</th>
+                                <th>ID Venda</th>
+                                <th>Cliente</th>
+                                <th>Itens</th>
+                                <th>Subtotal / Desc.</th>
+                                <th>Total</th>
+                                <th>Pagamento</th>
+                                <th style="text-align: right;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            <!-- Injetado dinamicamente -->
+                        </tbody>
+                    </table>
+
+                    <div class="table-footer">
+                        <span id="history-table-info">Mostrando 0 vendas</span>
+                        <div id="history-pagination"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: COMPROVANTE / CUPOM DE VENDA -->
+    <div class="modal-overlay" id="modal-comprovante">
+        <div class="modal modal-md">
+            <div class="modal-header">
+                <h2>
+                    <i data-lucide="receipt" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 0.35rem; color: var(--primary);"></i>
+                    Comprovante de Venda
+                </h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-comprovante')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem; background: #f8fafe;">
+                <!-- Conteúdo do Cupom Formatado para Impressão -->
+                <div class="receipt-card" id="printable-receipt">
+                    <div class="receipt-header">
+                        <h3 id="receipt-company-name">PetShop Manager</h3>
+                        <p id="receipt-company-info" style="font-size: 0.78rem; color: #555;">
+                            CNPJ: 00.000.000/0000-00<br>
+                            Endereço do Estabelecimento<br>
+                            Tel: (00) 0000-0000
+                        </p>
+                        <p style="margin-top: 0.4rem; font-weight: bold; text-transform: uppercase;">
+                            ** CUPOM NÃO FISCAL **
+                        </p>
+                    </div>
+
+                    <div style="font-size: 0.8rem; margin-bottom: 0.6rem;">
+                        <div><strong>Venda:</strong> <span id="receipt-sale-id">-</span></div>
+                        <div><strong>Data:</strong> <span id="receipt-sale-date">-</span></div>
+                        <div><strong>Cliente:</strong> <span id="receipt-sale-client">Cliente Avulso</span></div>
+                    </div>
+
+                    <table class="receipt-table">
+                        <thead>
+                            <tr>
+                                <th>QTD &bull; ITEM</th>
+                                <th style="text-align: right;">UN. (R$)</th>
+                                <th style="text-align: right;">TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="receipt-items-tbody">
+                            <!-- Itens do recibo -->
+                        </tbody>
+                    </table>
+
+                    <div style="border-top: 1px dashed #aaa; padding-top: 0.5rem; font-size: 0.82rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.2rem;">
+                            <span>Subtotal:</span>
+                            <span id="receipt-subtotal">R$ 0,00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.2rem;" id="receipt-discount-row">
+                            <span>Desconto:</span>
+                            <span id="receipt-discount">- R$ 0,00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 0.95rem; margin-top: 0.35rem; padding-top: 0.35rem; border-top: 1px solid #111;">
+                            <span>TOTAL A PAGAR:</span>
+                            <span id="receipt-total">R$ 0,00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 0.35rem;">
+                            <span>Forma de Pagamento:</span>
+                            <span id="receipt-payment-method">Pix</span>
+                        </div>
+                        <div id="receipt-cash-details" style="display: none;">
+                            <div style="display: flex; justify-content: space-between; margin-top: 0.2rem;">
+                                <span>Valor Recebido:</span>
+                                <span id="receipt-received-amount">R$ 0,00</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 0.2rem;">
+                                <span>Troco:</span>
+                                <span id="receipt-troco-amount">R$ 0,00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="receipt-footer">
+                        <p>Agradecemos a sua preferência!</p>
+                        <p style="font-size: 0.72rem; color: #777; margin-top: 0.25rem;">PetShop Manager &bull; Cuidando do seu pet com amor</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-comprovante')">
+                    Fechar
+                </button>
+                <button class="btn btn-primary" onclick="printReceipt()">
+                    <i data-lucide="printer"></i>
+                    Imprimir Comprovante
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+    
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="js/app.js"></script>
+    <script src="js/vendas.js"></script>
+</body>
+</html>

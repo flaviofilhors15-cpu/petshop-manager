@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetShop Manager - Funcionários</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1E3A5F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="PetShop">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
+</head>
+<body data-page="funcionarios">
+    <!-- Sidebar é injetada por app.js -->
+    <nav class="sidebar" id="sidebar"></nav>
+    
+    <div class="main-wrapper">
+        <!-- Header é injetado por app.js -->
+        <header class="header" id="header"></header>
+        
+        <main class="content">
+            <!-- Cabeçalho da Página -->
+            <div class="page-header">
+                <div>
+                    <h1>Gestão de Funcionários</h1>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">
+                        Controle de equipe, acompanhamento de atendimentos e cálculo automático de comissões.
+                    </p>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-primary" onclick="openEmployeeModal()">
+                        <i data-lucide="user-plus"></i>
+                        <span>Novo Funcionário</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cards de Métricas Rápidas -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <div class="stat-value text-primary" id="kpi-total-funcionarios">0</div>
+                        <div class="stat-label">Total de Funcionários</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="users"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card accent">
+                    <div class="stat-info">
+                        <div class="stat-value" id="kpi-operacionais">0</div>
+                        <div class="stat-label">Tosadores e Banhistas</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="scissors"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card success">
+                    <div class="stat-info">
+                        <div class="stat-value text-success" id="kpi-servicos-mes">0</div>
+                        <div class="stat-label">Serviços no Mês Atual</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="calendar-check"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card warning">
+                    <div class="stat-info">
+                        <div class="stat-value text-warning" id="kpi-comissoes-mes">R$ 0,00</div>
+                        <div class="stat-label">Comissões no Mês Atual</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="award"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros e Barra de Pesquisa -->
+            <div class="card mb-2" style="padding: 1rem 1.25rem;">
+                <div class="filters" style="margin-bottom: 0;">
+                    <div class="search-bar">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="func-search" placeholder="Buscar por nome, e-mail ou telefone..." oninput="onFilterEmployees()">
+                    </div>
+
+                    <div class="filter-group">
+                        <select id="func-filtro-cargo" onchange="onFilterEmployees()">
+                            <option value="">Todos os Cargos</option>
+                            <option value="Tosador">Tosador</option>
+                            <option value="Banhista">Banhista</option>
+                            <option value="Atendente">Atendente</option>
+                            <option value="Gerente">Gerente</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <select id="func-filtro-mes" onchange="onFilterEmployees()">
+                            <option value="mes_atual" selected>Mês Atual</option>
+                            <option value="mes_anterior">Mês Anterior</option>
+                            <option value="todos">Todo o Histórico</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-secondary btn-sm" onclick="clearEmployeeFilters()" title="Limpar Filtros">
+                        <i data-lucide="rotate-ccw"></i> Limpar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabela de Funcionários -->
+            <div class="table-container">
+                <div class="table-header">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <h3 style="font-size: 1rem; color: var(--text-primary);">Equipe Cadastrada</h3>
+                        <span class="badge badge-info" id="func-total-count">0 funcionários</span>
+                    </div>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th style="width: 150px;">Cargo</th>
+                            <th style="width: 160px;">Telefone</th>
+                            <th style="width: 150px; text-align: center;">Serviços no Mês</th>
+                            <th style="width: 180px; text-align: right;">Comissão</th>
+                            <th style="width: 140px; text-align: center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="func-table-body">
+                        <!-- Preenchido dinamicamente via JavaScript -->
+                    </tbody>
+                </table>
+
+                <div class="table-footer">
+                    <div id="func-pagination-info">Mostrando 0 de 0 funcionários</div>
+                    <div id="funcionarios-pagination"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: NOVO / EDITAR FUNCIONÁRIO -->
+    <!-- ============================================== -->
+    <div class="modal-overlay" id="modal-funcionario">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2 id="modal-func-titulo">Novo Funcionário</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-funcionario')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-funcionario" onsubmit="saveEmployee(event)">
+                    <input type="hidden" id="func-id">
+
+                    <div class="form-group">
+                        <label for="func-nome">Nome Completo <span class="text-danger">*</span></label>
+                        <input type="text" id="func-nome" required placeholder="Ex: João Santos">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="func-cargo">Cargo <span class="text-danger">*</span></label>
+                            <select id="func-cargo" required>
+                                <option value="Tosador">Tosador</option>
+                                <option value="Banhista">Banhista</option>
+                                <option value="Atendente">Atendente</option>
+                                <option value="Gerente">Gerente</option>
+                                <option value="Veterinário">Veterinário</option>
+                                <option value="Auxiliar">Auxiliar</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="func-telefone">Telefone / WhatsApp</label>
+                            <input type="text" id="func-telefone" placeholder="(11) 98888-0000">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="func-email">E-mail</label>
+                        <input type="email" id="func-email" placeholder="funcionario@petshop.com">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="func-comissao-tipo">Tipo de Comissão</label>
+                            <select id="func-comissao-tipo" onchange="updateCommissionLabel()">
+                                <option value="percentual">Percentual sobre Serviço (%)</option>
+                                <option value="fixo">Valor Fixo por Serviço (R$)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="func-comissao-valor" id="label-comissao-valor">Taxa (%)</label>
+                            <input type="number" id="func-comissao-valor" step="0.1" min="0" required placeholder="Ex: 15">
+                        </div>
+                    </div>
+
+                    <div class="modal-footer" style="padding: 1rem 0 0; margin-top: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-funcionario')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="btn-salvar-func">Salvar Funcionário</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: PERFIL DO FUNCIONÁRIO E HISTÓRICO DE SERVIÇOS -->
+    <!-- ============================================== -->
+    <div class="modal-overlay" id="modal-perfil-funcionario">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2>Perfil e Histórico de Comissões</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-perfil-funcionario')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="perfil-modal-content">
+                <!-- Conteúdo preenchido dinamicamente via JS -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-perfil-funcionario')">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="printEmployeeStatement()">
+                    <i data-lucide="printer"></i> Imprimir Extrato
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+    
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="js/app.js"></script>
+    <script src="js/funcionarios.js"></script>
+</body>
+</html>

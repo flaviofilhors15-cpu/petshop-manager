@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetShop Manager • Central do Dono (Super Admin)</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <style>
+        /* ========================================================
+           DESIGN SYSTEM EXCLUSIVO DO SUPER ADMIN (BACKOFFICE SAAS)
+           ======================================================== */
+        :root[data-theme="dark"] {
+            --adm-bg: #0b1120;
+            --adm-surface: #131c31;
+            --adm-surface-hover: #1e293b;
+            --adm-border: #1e293b;
+            --adm-border-light: #334155;
+            --adm-text: #f8fafc;
+            --adm-text-muted: #94a3b8;
+            --adm-card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
+        }
+        :root[data-theme="light"] {
+            --adm-bg: #f8fafc;
+            --adm-surface: #ffffff;
+            --adm-surface-hover: #f1f5f9;
+            --adm-border: #e2e8f0;
+            --adm-border-light: #cbd5e1;
+            --adm-text: #0f172a;
+            --adm-text-muted: #64748b;
+            --adm-card-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.08);
+        }
+
+        body.admin-body {
+            background: var(--adm-bg);
+            color: var(--adm-text);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Super Admin */
+        .adm-sidebar {
+            width: 270px;
+            background: var(--adm-surface);
+            border-right: 1px solid var(--adm-border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            transition: all 0.25s ease;
+        }
+        .adm-brand {
+            padding: 1.5rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--adm-border);
+        }
+        .adm-brand-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .adm-nav {
+            padding: 1rem 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .adm-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.75rem 1rem;
+            color: var(--adm-text-muted);
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.15s ease;
+            cursor: pointer;
+        }
+        .adm-nav-item:hover {
+            background: var(--adm-surface-hover);
+            color: var(--adm-text);
+        }
+        .adm-nav-item.active {
+            background: #2563eb;
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+        }
+        .adm-nav-badge {
+            margin-left: auto;
+            background: rgba(255, 255, 255, 0.15);
+            font-size: 0.72rem;
+            padding: 2px 7px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        /* Layout Principal */
+        .adm-main {
+            margin-left: 270px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        /* Header Superior */
+        .adm-header {
+            height: 70px;
+            background: var(--adm-surface);
+            border-bottom: 1px solid var(--adm-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+        .adm-search-box {
+            position: relative;
+            width: 380px;
+        }
+        .adm-search-box input {
+            width: 100%;
+            background: var(--adm-bg);
+            border: 1px solid var(--adm-border);
+            color: var(--adm-text);
+            padding: 0.55rem 1rem 0.55rem 2.4rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .adm-search-box input:focus {
+            border-color: #3b82f6;
+        }
+        .adm-search-box i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--adm-text-muted);
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Conteúdo & Abas */
+        .adm-content {
+            padding: 2rem;
+            flex: 1;
+        }
+        .adm-section {
+            display: none;
+        }
+        .adm-section.active {
+            display: block;
+            animation: fadeIn 0.25s ease-in-out;
+        }
+
+        /* Cards de Métricas SaaS */
+        .adm-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        .adm-kpi-card {
+            background: var(--adm-surface);
+            border: 1px solid var(--adm-border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: var(--adm-card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        .adm-kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #3b82f6;
+        }
+        .adm-kpi-card.success::before { background: #10b981; }
+        .adm-kpi-card.warning::before { background: #f59e0b; }
+        .adm-kpi-card.danger::before { background: #ef4444; }
+
+        .adm-kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--adm-text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        .adm-kpi-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--adm-text);
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.2;
+        }
+        .adm-kpi-sub {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 0.5rem;
+            font-size: 0.78rem;
+            color: var(--adm-text-muted);
+        }
+
+        /* Containers de Gráficos e Tabelas */
+        .adm-card {
+            background: var(--adm-surface);
+            border: 1px solid var(--adm-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--adm-card-shadow);
+            margin-bottom: 1.75rem;
+        }
+        .adm-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+        .adm-card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--adm-text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+
+        /* Tabela Especializada de Tenants */
+        .adm-table-wrapper {
+            overflow-x: auto;
+            border: 1px solid var(--adm-border);
+            border-radius: 8px;
+        }
+        .adm-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.86rem;
+            text-align: left;
+        }
+        .adm-table th {
+            background: var(--adm-bg);
+            color: var(--adm-text-muted);
+            padding: 0.85rem 1rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--adm-border);
+            white-space: nowrap;
+        }
+        .adm-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--adm-border);
+            vertical-align: middle;
+        }
+        .adm-table tbody tr:hover {
+            background: var(--adm-surface-hover);
+        }
+
+        /* Badges de Status do Tenant */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-active { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-trial { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .status-suspended { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .status-cancelled { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+
+        /* Gaveta Lateral (Drawer de Detalhes da Loja) */
+        .adm-drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            display: none;
+            justify-content: flex-end;
+        }
+        .adm-drawer {
+            width: 600px;
+            max-width: 95vw;
+            background: var(--adm-surface);
+            height: 100vh;
+            overflow-y: auto;
+            border-left: 1px solid var(--adm-border);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            animation: slideInRight 0.25s ease-out;
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Tarja de Impersonate Segura */
+        .impersonate-banner {
+            display: none;
+            background: linear-gradient(90deg, #dc2626, #991b1b);
+            color: #ffffff;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+    <!-- Chart.js para gráficos executivos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="admin-body">
+
+    <!-- Tarja de Impersonação Segura (Ativada quando o Dono loga como uma loja) -->
+    <div id="impersonate-banner" class="impersonate-banner" style="display:none;">
+        <div style="display:flex; align-items:center; gap:8px;">
+            <i data-lucide="shield-alert"></i>
+            <span>MODO DE SUPORTE MASTER: Você está navegando como o Pet Shop: <strong id="impersonate-store-name">Loja X</strong></span>
+        </div>
+        <button class="btn btn-sm" style="background:#ffffff; color:#991b1b; font-weight:700; border:none; padding:4px 12px;" onclick="encerrarImpersonacao()">
+            Encerrar Suporte e Voltar
+        </button>
+    </div>
+
+    <!-- SIDEBAR SUPER ADMIN -->
+    <aside class="adm-sidebar">
+        <div class="adm-brand">
+            <span style="font-size:1.6rem;">👑</span>
+            <div>
+                <div style="font-weight:700; font-size:1rem; color:var(--adm-text); display:flex; align-items:center; gap:6px;">
+                    PetShop Manager
+                    <span class="adm-brand-badge">Super Admin</span>
+                </div>
+                <div style="font-size:0.75rem; color:var(--adm-text-muted);">Painel Master de Controle</div>
+            </div>
+        </div>
+
+        <nav class="adm-nav">
+            <div class="adm-nav-item active" onclick="navegarAdmin('dashboard', this)">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Visão Executiva</span>
+            </div>
+            <div class="adm-nav-item" onclick="navegarAdmin('tenants', this)">
+                <i data-lucide="store"></i>
+                <span>Gestão de Lojas</span>
+                <span class="adm-nav-badge" id="badge-total-lojas">0</span>
+            </div>
+            <div class="adm-nav-item" onclick="navegarAdmin('financeiro', this)">
+                <i data-lucide="wallet"></i>
+                <span>Vendas & MRR</span>
+            </div>
+            <div class="adm-nav-item" onclick="navegarAdmin('telemetria', this)">
+                <i data-lucide="activity"></i>
+                <span>Uso & Churn</span>
+            </div>
+            <div class="adm-nav-item" onclick="navegarAdmin('comunicacao', this)">
+                <i data-lucide="megaphone"></i>
+                <span>Avisos Globais</span>
+            </div>
+            <div class="adm-nav-item" onclick="navegarAdmin('auditoria', this)">
+                <i data-lucide="shield-check"></i>
+                <span>Trilha de Auditoria</span>
+            </div>
+            <div class="adm-nav-item" onclick="navegarAdmin('configuracoes', this)">
+                <i data-lucide="settings"></i>
+                <span>Configurações SaaS</span>
+            </div>
+        </nav>
+
+        <div style="padding:1rem 1.25rem; border-top:1px solid var(--adm-border); display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:36px; height:36px; border-radius:50%; background:#2563eb; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700;">
+                    F
+                </div>
+                <div style="overflow:hidden;">
+                    <div style="font-size:0.85rem; font-weight:600; color:var(--adm-text); text-overflow:ellipsis; white-space:nowrap;">Flávio Filho</div>
+                    <div style="font-size:0.72rem; color:var(--adm-text-muted);">Dono da Plataforma</div>
+                </div>
+            </div>
+            <div style="display:flex; gap:6px; margin-top:4px;">
+                <button class="btn btn-secondary btn-sm" style="flex:1; justify-content:center; font-size:0.75rem;" onclick="alternarTemaAdmin()" title="Alternar Modo Escuro / Claro">
+                    <i data-lucide="moon" id="icon-theme"></i> Tema
+                </button>
+                <button class="btn btn-secondary btn-sm" style="flex:1; justify-content:center; font-size:0.75rem; color:#ef4444;" onclick="fazerLogoutAdmin()" title="Encerrar Sessão Master">
+                    <i data-lucide="log-out"></i> Sair
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ÁREA PRINCIPAL -->
+    <main class="adm-main">
+        <!-- HEADER SUPER ADMIN -->
+        <header class="adm-header">
+            <div class="adm-search-box">
+                <i data-lucide="search"></i>
+                <input type="text" id="input-busca-global" placeholder="Buscar loja por nome, CNPJ, responsável ou fone..." oninput="filtrarLojasRapido(this.value)">
+            </div>
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <div style="font-size:0.82rem; color:var(--adm-text-muted); background:var(--adm-bg); padding:6px 12px; border-radius:20px; border:1px solid var(--adm-border);">
+                    Ambiente Master • <strong style="color:#10b981;">Conectado</strong>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="abrirModalNovaLojaManual()">
+                    <i data-lucide="plus-circle"></i> Cadastrar Pet Shop
+                </button>
+            </div>
+        </header>
+
+        <!-- CONTEÚDO DINÂMICO (SEÇÕES) -->
+        <div class="adm-content">
+
+            <!-- ============================================== -->
+            <!-- SEÇÃO 1: DASHBOARD EXECUTIVO (HOME) -->
+            <!-- ============================================== -->
+            <section id="sec-dashboard" class="adm-section active">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <div>
+                        <h1 style="font-size:1.5rem; margin:0 0 4px; font-weight:700;">Visão Geral do Negócio SaaS</h1>
+                        <p style="color:var(--adm-text-muted); font-size:0.88rem; margin:0;">Métricas em tempo real de receita, ciclo de vida das lojas e expansão da plataforma.</p>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-secondary btn-sm" onclick="exportarRelatorioSaaSCsv()">
+                            <i data-lucide="download"></i> Exportar Métricas (CSV)
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="recarregarMetricasSaaS()">
+                            <i data-lucide="refresh-cw"></i> Atualizar Dados
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CARDS DE METRICAS PRINCIPAIS (MRR, CHURN, LOJAS) -->
+                <div class="adm-kpi-grid">
+                    <div class="adm-kpi-card success">
+                        <div class="adm-kpi-header">
+                            <span>MRR (Receita Recorrente)</span>
+                            <i data-lucide="dollar-sign"></i>
+                        </div>
+                        <div class="adm-kpi-value" id="kpi-mrr">R$ 0,00</div>
+                        <div class="adm-kpi-sub">
+                            <span style="color:#10b981; font-weight:600;">▲ ARR: <span id="kpi-arr">R$ 0,00</span></span>
+                            <span>• Anualizado</span>
+                        </div>
+                    </div>
+
+                    <div class="adm-kpi-card">
+                        <div class="adm-kpi-header">
+                            <span>Lojas Cadastradas</span>
+                            <i data-lucide="store"></i>
+                        </div>
+                        <div class="adm-kpi-value" id="kpi-lojas-total">0</div>
+                        <div class="adm-kpi-sub">
+                            <span style="color:#10b981; font-weight:600;" id="kpi-lojas-ativas">0 ativas</span> •
+                            <span style="color:#f59e0b; font-weight:600;" id="kpi-lojas-trial">0 trial</span>
+                        </div>
+                    </div>
+
+                    <div class="adm-kpi-card warning">
+                        <div class="adm-kpi-header">
+                            <span>Inadimplência</span>
+                            <i data-lucide="alert-triangle"></i>
+                        </div>
+                        <div class="adm-kpi-value" id="kpi-inadimplencia-valor">R$ 0,00</div>
+                        <div class="adm-kpi-sub">
+                            <span style="color:#ef4444; font-weight:600;" id="kpi-inadimplencia-lojas">0 lojas</span> com fatura em atraso
+                        </div>
+                    </div>
+
+                    <div class="adm-kpi-card">
+                        <div class="adm-kpi-header">
+                            <span>Churn Rate (Cancelamento)</span>
+                            <i data-lucide="trending-down"></i>
+                        </div>
+                        <div class="adm-kpi-value" id="kpi-churn">0.0%</div>
+                        <div class="adm-kpi-sub">
+                            <span>Ticket Médio: <strong id="kpi-arpu" style="color:var(--adm-text);">R$ 0,00</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="adm-kpi-card success">
+                        <div class="adm-kpi-header">
+                            <span>Volume na Plataforma</span>
+                            <i data-lucide="users"></i>
+                        </div>
+                        <div class="adm-kpi-value" id="kpi-volume-pets">0 pets</div>
+                        <div class="adm-kpi-sub">
+                            <span id="kpi-volume-tutores">0 tutores</span> gerenciados em todo o país
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRÁFICOS EXECUTIVOS (CHART.JS) -->
+                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+                    <div class="adm-card">
+                        <div class="adm-card-header">
+                            <h3 class="adm-card-title"><i data-lucide="line-chart"></i> Evolução da Receita Recorrente (MRR nos últimos 6 meses)</h3>
+                        </div>
+                        <div style="height:260px;">
+                            <canvas id="chart-mrr-evolucao"></canvas>
+                        </div>
+                    </div>
+                    <div class="adm-card">
+                        <div class="adm-card-header">
+                            <h3 class="adm-card-title"><i data-lucide="pie-chart"></i> Lojas por Plano</h3>
+                        </div>
+                        <div style="height:260px;">
+                            <canvas id="chart-planos-distribuicao"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ALERTAS RECENTES -->
+                <div class="adm-card">
+                    <div class="adm-card-header">
+                        <h3 class="adm-card-title"><i data-lucide="bell-ring" style="color:#f59e0b;"></i> Radar de Atenção & Risco de Churn</h3>
+                    </div>
+                    <div id="lista-alertas-radar" style="display:flex; flex-direction:column; gap:0.75rem;">
+                        <!-- Injetado via JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- SEÇÃO 2: GESTÃO COMPLETA DE LOJAS (TENANTS) -->
+            <!-- ============================================== -->
+            <section id="sec-tenants" class="adm-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <div>
+                        <h1 style="font-size:1.5rem; margin:0 0 4px; font-weight:700;">Gestão de Pet Shops (Tenants)</h1>
+                        <p style="color:var(--adm-text-muted); font-size:0.88rem; margin:0;">Controle total de status, acessos, planos, telemetria e suporte individual.</p>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="abrirModalNovaLojaManual()">
+                        <i data-lucide="plus"></i> Nova Loja
+                    </button>
+                </div>
+
+                <!-- FILTROS AVANÇADOS -->
+                <div class="adm-card" style="padding:1rem 1.25rem; margin-bottom:1.25rem;">
+                    <div style="display:flex; flex-wrap:wrap; gap:1rem; align-items:center;">
+                        <div style="flex:2; min-width:240px;">
+                            <input type="text" id="filtro-nome-loja" placeholder="Filtrar por nome, responsável ou email..." class="form-control" style="background:var(--adm-bg); border-color:var(--adm-border); color:var(--adm-text);" oninput="renderizarTabelaLojas()">
+                        </div>
+                        <div style="flex:1; min-width:140px;">
+                            <select id="filtro-status-loja" class="form-control" style="background:var(--adm-bg); border-color:var(--adm-border); color:var(--adm-text);" onchange="renderizarTabelaLojas()">
+                                <option value="">Todos os Status</option>
+                                <option value="active">🟢 Ativas</option>
+                                <option value="trial">🟡 Em Teste (Trial)</option>
+                                <option value="suspended">🔴 Suspensas/Bloqueadas</option>
+                                <option value="cancelled">⚪ Canceladas</option>
+                            </select>
+                        </div>
+                        <div style="flex:1; min-width:140px;">
+                            <select id="filtro-plano-loja" class="form-control" style="background:var(--adm-bg); border-color:var(--adm-border); color:var(--adm-text);" onchange="renderizarTabelaLojas()">
+                                <option value="">Todos os Planos</option>
+                                <option value="basico">Básico (R$ 89,90)</option>
+                                <option value="pro">Profissional (R$ 149,90)</option>
+                                <option value="premium">Premium (R$ 249,90)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABELA OPERACIONAL DE TENANTS -->
+                <div class="adm-card" style="padding:0; overflow:hidden;">
+                    <div class="adm-table-wrapper" style="border:none;">
+                        <table class="adm-table">
+                            <thead>
+                                <tr>
+                                    <th>Pet Shop / Cidade</th>
+                                    <th>Responsável & Contato</th>
+                                    <th>Plano Atual</th>
+                                    <th>Status da Conta</th>
+                                    <th>Uso / Telemetria</th>
+                                    <th>Data Cadastro</th>
+                                    <th style="text-align:right;">Ações do Super Admin</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-tenants-body">
+                                <!-- Preenchido dinamicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- SEÇÃO 3: VENDAS, ASSINATURAS E FATURAS -->
+            <!-- ============================================== -->
+            <section id="sec-financeiro" class="adm-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <div>
+                        <h1 style="font-size:1.5rem; margin:0 0 4px; font-weight:700;">Vendas da Plataforma & Faturamento Recorrente</h1>
+                        <p style="color:var(--adm-text-muted); font-size:0.88rem; margin:0;">Controle de cobranças das mensalidades dos petshops, renovações e links de pagamento.</p>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="gerarCobrancasMensais()">
+                        <i data-lucide="receipt"></i> Processar Ciclo de Faturamento
+                    </button>
+                </div>
+
+                <div class="adm-card" style="padding:0; overflow:hidden;">
+                    <div class="adm-table-wrapper" style="border:none;">
+                        <table class="adm-table">
+                            <thead>
+                                <tr>
+                                    <th>Loja / Cliente</th>
+                                    <th>Plano</th>
+                                    <th>Valor Fatura</th>
+                                    <th>Vencimento</th>
+                                    <th>Status Cobrança</th>
+                                    <th>Forma Pagamento</th>
+                                    <th style="text-align:right;">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-faturas-body">
+                                <!-- Preenchido dinamicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- SEÇÃO 4: TELEMETRIA & ENGAJAMENTO DAS LOJAS -->
+            <!-- ============================================== -->
+            <section id="sec-telemetria" class="adm-section">
+                <div style="margin-bottom:1.5rem;">
+                    <h1 style="font-size:1.5rem; margin:0 0 4px; font-weight:700;">Telemetria de Uso das Lojas</h1>
+                    <p style="color:var(--adm-text-muted); font-size:0.88rem; margin:0;">Monitore o engajamento operacional agregado para prevenir cancelamentos precoces (Churn Prevention).</p>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+                    <div class="adm-card">
+                        <h3 class="adm-card-title"><i data-lucide="flame" style="color:#f59e0b;"></i> Top Lojas Mais Ativas</h3>
+                        <div id="lista-ranking-ativas" style="margin-top:1rem; display:flex; flex-direction:column; gap:8px;"></div>
+                    </div>
+                    <div class="adm-card">
+                        <h3 class="adm-card-title"><i data-lucide="heart-crack" style="color:#ef4444;"></i> Lojas com Menor Atividade (Risco)</h3>
+                        <div id="lista-ranking-risco" style="margin-top:1rem; display:flex; flex-direction:column; gap:8px;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- SEÇÃO 5: COMUNICADOS E AVISOS GLOBAIS -->
+            <!-- ============================================== -->
+            <section id="sec-comunicacao" class="adm-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <div>
+                        <h1 style="font-size:1.5rem; margin:0 0 4px; font-weight:700;">Comunicação & Banners no Sistema</h1>
+                        <p style="color:var(--adm-text-muted); font-size:0.88rem; margin:0;">Envie avisos de manutenção, atualizações ou mensagens operacionais para todas as lojas simultaneamente.</p>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="abrirModalNovoAviso()">
+                        <i data-lucide="send"></i> Publicar Novo Aviso
+                    </button>
+                </div>
+
+                <div class="adm-card" style="padding:0; overflow:hidden;">
+                    <div class="adm-table-wrapper" style="border:none;">
+                        <table class="adm-table">
+                            <thead>
+                                <tr>
+                                    <th>Título do Comunicado</th>
+                                    <th>Tipo</th>
+                                    <th>Público Alvo</th>
+                                    <th>Data Publicação</th>
+                                    <th>Status</th>
+                                    <th style="text-align:right;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-avisos-body">
+                                <!-- Preenchido dinamicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- SEÇÃO 6: TRILHA DE AUDITORIA (AUDIT TRAIL) -->
+            <!-- ============================================== -->
+            <section id="sec-auditoria" class="adm-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <div>
+                        <h1 style="font-size:1.5rem; margin:0 0 4px; font-weight:700;">Trilha de Auditoria Administrativa</h1>
+                        <p style="color:var(--adm-text-muted); font-size:0.88rem; margin:0;">Histórico rigoroso e imutável de todas as ações de comando executadas na plataforma.</p>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="exportarAuditoriaAdminCsv()">
+                        <i data-lucide="file-spreadsheet"></i> Baixar Logs (CSV)
+                    </button>
+                </div>
+
+                <div class="adm-card" style="padding:0; overflow:hidden;">
+                    <div class="adm-table-wrapper" style="border:none;">
+                        <table class="adm-table">
+                            <thead>
+                                <tr>
+                                    <th>Data / Hora</th>
+                                    <th>Ação Executada</th>
+                                    <th>Loja Alvo</th>
+                                    <th>Autor da Ação</th>
+                                    <th>Motivo / Justificativa</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-auditoria-admin-body">
+                                <!-- Preenchido dinamicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- SEÇÃO 7: CONFIGURAÇÕES DA PLATAFORMA SAAS -->
+            <!-- ============================================== -->
+            <section id="sec-configuracoes" class="adm-section">
+                <div style="margin-bottom:1.5rem;">
+                    <h1 style="font-size:1.5rem; margin:0 0 4px; font-weight:700;">Configurações Globais do SaaS</h1>
+                    <p style="color:var(--adm-text-muted); font-size:0.88rem; margin:0;">Definições de planos, regras de tolerância de inadimplência (Dunning) e credenciais.</p>
+                </div>
+
+                <div class="adm-card">
+                    <h3 class="adm-card-title"><i data-lucide="shield-alert"></i> Regras Automáticas de Bloqueio & Trial</h3>
+                    <form onsubmit="salvarConfiguracoesSaaS(event)" style="margin-top:1.25rem;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="color:var(--adm-text-muted);">Dias de Teste Grátis (Trial Padrão)</label>
+                                <input type="number" id="cfg-dias-trial" class="form-control" style="background:var(--adm-bg); border-color:var(--adm-border); color:var(--adm-text);" value="14" min="1" max="60">
+                            </div>
+                            <div class="form-group">
+                                <label style="color:var(--adm-text-muted);">Tolerância de Inadimplência antes do Bloqueio Automático (Dias)</label>
+                                <input type="number" id="cfg-dias-tolerancia" class="form-control" style="background:var(--adm-bg); border-color:var(--adm-border); color:var(--adm-text);" value="5" min="1" max="30">
+                            </div>
+                        </div>
+
+                        <div class="form-row" style="margin-top:1rem;">
+                            <div class="form-group">
+                                <label style="color:var(--adm-text-muted);">Gateway de Cobrança Padrão</label>
+                                <select id="cfg-gateway" class="form-control" style="background:var(--adm-bg); border-color:var(--adm-border); color:var(--adm-text);">
+                                    <option value="asaas">Asaas (Pix Recorrente, Boleto e Cartão)</option>
+                                    <option value="mercadopago">Mercado Pago</option>
+                                    <option value="stripe">Stripe Billing</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="color:var(--adm-text-muted);">Chave Mestra do Dono (SuperAdmin PIN)</label>
+                                <input type="password" id="cfg-chave-mestra" class="form-control" style="background:var(--adm-bg); border-color:var(--adm-border); color:var(--adm-text);" placeholder="Sua senha master">
+                            </div>
+                        </div>
+
+                        <div style="display:flex; justify-content:flex-end; margin-top:1.5rem;">
+                            <button type="submit" class="btn btn-primary">
+                                <i data-lucide="check"></i> Salvar Configurações Master
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- ============================================== -->
+    <!-- GAVETA LATERAL: DOSSIÊ 360° DA LOJA -->
+    <!-- ============================================== -->
+    <div id="drawer-loja-overlay" class="adm-drawer-overlay" onclick="fecharGavetaLoja(event)">
+        <div class="adm-drawer" onclick="event.stopPropagation()">
+            <div style="padding:1.5rem; border-bottom:1px solid var(--adm-border); display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="font-size:1.5rem;">🏪</div>
+                    <div>
+                        <h2 id="dossie-nome" style="font-size:1.2rem; margin:0; color:var(--adm-text);">Nome da Loja</h2>
+                        <span id="dossie-slug" style="font-size:0.75rem; color:var(--adm-text-muted); font-family:'JetBrains Mono', monospace;">ID: ten_000</span>
+                    </div>
+                </div>
+                <button class="btn-icon" onclick="fecharGavetaLoja()" style="color:var(--adm-text-muted);"><i data-lucide="x"></i></button>
+            </div>
+
+            <div style="padding:1.5rem; flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:1.5rem;">
+                
+                <!-- Status & Detalhes -->
+                <div style="background:var(--adm-bg); padding:1rem; border-radius:8px; border:1px solid var(--adm-border);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                        <span style="font-size:0.8rem; color:var(--adm-text-muted);">Status da Loja:</span>
+                        <span id="dossie-status-badge" class="status-badge status-active">Ativa</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; font-size:0.85rem;">
+                        <div>Responsável: <strong id="dossie-responsavel" style="color:var(--adm-text);">-</strong></div>
+                        <div>WhatsApp: <strong id="dossie-telefone" style="color:var(--adm-text);">-</strong></div>
+                        <div>E-mail: <strong id="dossie-email" style="color:var(--adm-text);">-</strong></div>
+                        <div>Plano: <strong id="dossie-plano" style="color:var(--adm-text);">-</strong></div>
+                    </div>
+                </div>
+
+                <!-- AÇÕES CRÍTICAS DO SUPER ADMIN -->
+                <div>
+                    <h4 style="font-size:0.85rem; color:var(--adm-text-muted); text-transform:uppercase; margin-bottom:0.75rem; letter-spacing:0.5px;">Ações Rápidas de Comando</h4>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem;">
+                        <button class="btn btn-primary" style="justify-content:center; font-size:0.82rem; background:#2563eb;" onclick="iniciarImpersonacaoLoja()">
+                            <i data-lucide="log-in"></i> Acessar como a Loja
+                        </button>
+                        <button class="btn btn-secondary" style="justify-content:center; font-size:0.82rem;" onclick="abrirModalEstenderTrial()">
+                            <i data-lucide="clock"></i> Estender Trial
+                        </button>
+                        <button class="btn btn-secondary" style="justify-content:center; font-size:0.82rem; color:#f59e0b; border-color:rgba(245,158,11,0.3);" onclick="alternarStatusLoja('suspended')">
+                            <i data-lucide="pause-circle"></i> Bloquear Acesso
+                        </button>
+                        <button class="btn btn-secondary" style="justify-content:center; font-size:0.82rem; color:#10b981; border-color:rgba(16,185,129,0.3);" onclick="alternarStatusLoja('active')">
+                            <i data-lucide="check-circle"></i> Liberar Acesso
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TELEMETRIA DE USO -->
+                <div style="background:var(--adm-bg); padding:1rem; border-radius:8px; border:1px solid var(--adm-border);">
+                    <h4 style="font-size:0.85rem; color:var(--adm-text-muted); text-transform:uppercase; margin-top:0; margin-bottom:0.75rem;">Telemetria Agregada</h4>
+                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.75rem; text-align:center;">
+                        <div style="background:var(--adm-surface); padding:0.75rem; border-radius:6px;">
+                            <div id="dossie-count-tutores" style="font-weight:700; font-size:1.1rem; color:#3b82f6;">0</div>
+                            <div style="font-size:0.72rem; color:var(--adm-text-muted);">Tutores</div>
+                        </div>
+                        <div style="background:var(--adm-surface); padding:0.75rem; border-radius:6px;">
+                            <div id="dossie-count-pets" style="font-weight:700; font-size:1.1rem; color:#10b981;">0</div>
+                            <div style="font-size:0.72rem; color:var(--adm-text-muted);">Pets</div>
+                        </div>
+                        <div style="background:var(--adm-surface); padding:0.75rem; border-radius:6px;">
+                            <div id="dossie-count-agendamentos" style="font-weight:700; font-size:1.1rem; color:#f59e0b;">0</div>
+                            <div style="font-size:0.72rem; color:var(--adm-text-muted);">Agendamentos</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NOTAS DE SUPORTE INTERNAS -->
+                <div>
+                    <h4 style="font-size:0.85rem; color:var(--adm-text-muted); text-transform:uppercase; margin-bottom:0.75rem;">Histórico & Notas Internas Privadas</h4>
+                    <div id="dossie-notas-lista" style="display:flex; flex-direction:column; gap:8px; margin-bottom:1rem; max-height:160px; overflow-y:auto;">
+                        <!-- Notas injetadas -->
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="input-nova-nota-dossie" placeholder="Adicionar anotação interna..." class="form-control" style="background:var(--adm-bg); border-color:var(--adm-border); color:var(--adm-text); font-size:0.82rem;">
+                        <button class="btn btn-secondary btn-sm" onclick="adicionarNotaDossie()">Salvar</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CADASTRO MANUAL DE NOVA LOJA -->
+    <div id="modal-nova-loja-admin" class="modal-overlay">
+        <div class="modal modal-md" style="background:var(--adm-surface); border:1px solid var(--adm-border); color:var(--adm-text);">
+            <div class="modal-header" style="border-bottom-color:var(--adm-border);">
+                <h2 style="color:var(--adm-text);">Cadastrar Nova Loja Manualmente</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-nova-loja-admin')" style="color:var(--adm-text-muted);"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-cad-loja-admin" onsubmit="salvarNovaLojaAdmin(event)">
+                    <div class="form-group">
+                        <label style="color:var(--adm-text-muted);">Nome do Pet Shop *</label>
+                        <input type="text" id="cad-adm-nome" class="form-control" style="background:var(--adm-bg); border-color:var(--adm-border); color:var(--adm-text);" required placeholder="Ex: Pet Shop Patinhas">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label style="color:var(--adm-text-muted);">Nome do Responsável *</label>
+                            <input type="text" id="cad-adm-responsavel" class="form-control" style="background:var(--adm-bg); border-color:var(--adm-border); color:var(--adm-text);" required placeholder="Ex: Carlos Silva">
+                        </div>
+                        <div class="form-group">
+                            <label style="color:var(--adm-text-muted);">WhatsApp com DDD *</label>
+                            <input type="text" id="cad-adm-telefone" class="form-control" style="background:var(--adm-bg); border-color:var(--adm-border); color:var(--adm-text);" required placeholder="(11) 99999-9999">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label style="color:var(--adm-text-muted);">E-mail de Acesso *</label>
+                        <input type="email" id="cad-adm-email" class="form-control" style="background:var(--adm-bg); border-color:var(--adm-border); color:var(--adm-text);" required placeholder="contato@petshop.com">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label style="color:var(--adm-text-muted);">Plano Inicial *</label>
+                            <select id="cad-adm-plano" class="form-control" style="background:var(--adm-bg); border-color:var(--adm-border); color:var(--adm-text);">
+                                <option value="pro">Profissional (R$ 149,90/mês)</option>
+                                <option value="basico">Básico (R$ 89,90/mês)</option>
+                                <option value="premium">Premium (R$ 249,90/mês)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label style="color:var(--adm-text-muted);">Senha Inicial *</label>
+                            <input type="text" id="cad-adm-senha" class="form-control" style="background:var(--adm-bg); border-color:var(--adm-border); color:var(--adm-text);" value="pet123456" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="padding:1rem 0 0; margin-top:1rem; border-top-color:var(--adm-border);">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-nova-loja-admin')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Criar Pet Shop</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="js/app.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

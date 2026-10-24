@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E3A5F"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  
+  <!-- Fundo com cantos arredondados -->
+  <rect width="512" height="512" rx="110" fill="url(#bgGrad)"/>
+  
+  <!-- Patinha Branca Centralizada -->
+  <g fill="#FFFFFF" filter="url(#shadow)">
+    <!-- Almofada principal -->
+    <path d="M 256 260 C 205 260 170 300 170 355 C 170 395 205 425 256 425 C 307 425 342 395 342 355 C 342 300 307 260 256 260 Z"/>
+    <!-- Dedo 1 (Esquerda) -->
+    <ellipse cx="160" cy="225" rx="36" ry="50" transform="rotate(-20 160 225)"/>
+    <!-- Dedo 2 (Centro-Esquerda) -->
+    <ellipse cx="218" cy="170" rx="36" ry="56" transform="rotate(-6 218 170)"/>
+    <!-- Dedo 3 (Centro-Direita) -->
+    <ellipse cx="294" cy="170" rx="36" ry="56" transform="rotate(6 294 170)"/>
+    <!-- Dedo 4 (Direita) -->
+    <ellipse cx="352" cy="225" rx="36" ry="50" transform="rotate(20 352 225)"/>
+  </g>
+  
+  <!-- Detalhe decorativo: brilho/estrela -->
+  <path d="M 390 100 L 398 120 L 418 128 L 398 136 L 390 156 L 382 136 L 362 128 L 382 120 Z" fill="#FDE047"/>
+  <path d="M 120 120 L 125 133 L 138 138 L 125 143 L 120 156 L 115 143 L 102 138 L 115 133 Z" fill="#93C5FD"/>
+</svg>

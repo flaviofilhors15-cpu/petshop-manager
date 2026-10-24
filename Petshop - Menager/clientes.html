@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetShop Manager - Clientes e Pets</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1E3A5F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="PetShop">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
+    <style>
+        /* Estilos complementares específicos de Clientes e Pets */
+        .client-name-link {
+            font-weight: 600;
+            color: var(--primary-dark);
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .client-name-link:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+        .client-avatar-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .avatar-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(91, 164, 230, 0.15);
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+        .pets-tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            align-items: center;
+        }
+        .pet-mini-badge {
+            font-size: 0.75rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .pet-mini-badge.dog {
+            background: #eef6ff;
+            border-color: #c7e0f9;
+            color: var(--primary-dark);
+        }
+        .pet-mini-badge.cat {
+            background: #fff8e8;
+            border-color: #f7e0b2;
+            color: #b37400;
+        }
+        .sort-th {
+            cursor: pointer;
+            user-select: none;
+            transition: var(--transition);
+        }
+        .sort-th:hover {
+            color: var(--primary) !important;
+            background: rgba(91, 164, 230, 0.08) !important;
+        }
+        .sort-icon {
+            display: inline-flex;
+            vertical-align: middle;
+            margin-left: 0.35rem;
+            width: 14px;
+            height: 14px;
+        }
+        
+        /* Modal Perfil do Cliente */
+        .profile-hero {
+            background: linear-gradient(135deg, rgba(91, 164, 230, 0.1) 0%, rgba(30, 58, 95, 0.05) 100%);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .profile-hero-left {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+        .profile-avatar-lg {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            font-weight: 700;
+            box-shadow: var(--shadow-sm);
+        }
+        .profile-hero-info h3 {
+            font-size: 1.35rem;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+        .profile-hero-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        .profile-hero-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .profile-hero-meta i, .profile-hero-meta svg {
+            width: 14px;
+            height: 14px;
+            color: var(--primary);
+        }
+        .profile-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            background: var(--bg-card);
+            padding: 1.25rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-light);
+            margin-bottom: 1.5rem;
+        }
+        .detail-item label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-light);
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+        .detail-item p {
+            font-size: 0.92rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            word-break: break-word;
+        }
+        
+        /* Stats do Perfil */
+        .profile-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .profile-stat-item {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            text-align: center;
+        }
+        .profile-stat-item .val {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            line-height: 1.2;
+        }
+        .profile-stat-item .lbl {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Pets no Perfil */
+        .pets-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .pets-section-header h3 {
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .pet-cards-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 1rem;
+        }
+        .pet-profile-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            transition: var(--transition);
+            position: relative;
+        }
+        .pet-profile-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+        .pet-card-head {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+        .pet-photo-frame {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: rgba(91, 164, 230, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+            border: 2px solid var(--border-light);
+        }
+        .pet-photo-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .pet-photo-frame .fallback-icon {
+            font-size: 1.6rem;
+        }
+        .pet-card-title {
+            flex: 1;
+            min-width: 0;
+        }
+        .pet-card-title h4 {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 0.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .pet-card-title p {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+        .pet-badges-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+        .pet-specs-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            background: var(--bg);
+            padding: 0.75rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
+        }
+        .pet-spec-cell label {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .pet-spec-cell span {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .pet-allergies-alert {
+            background: var(--danger-light);
+            border: 1px solid #ffd0db;
+            color: var(--danger);
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .pet-allergies-alert i, .pet-allergies-alert svg {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+        .pet-obs-text {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            background: var(--bg);
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius-sm);
+        }
+        .pet-card-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            margin-top: auto;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        /* Foto upload preview no Modal Pet */
+        .photo-upload-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+        }
+        .photo-upload-box {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 2px dashed var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            overflow: hidden;
+            transition: var(--transition);
+            background: var(--bg);
+            color: var(--text-light);
+            position: relative;
+        }
+        .photo-upload-box:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(91, 164, 230, 0.05);
+        }
+        .photo-upload-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .photo-upload-box i, .photo-upload-box svg {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 2px;
+        }
+        .photo-upload-box span {
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body data-page="clientes">
+    <!-- Sidebar é injetada por app.js -->
+    <nav class="sidebar" id="sidebar"></nav>
+    
+    <div class="main-wrapper">
+        <!-- Header é injetado por app.js -->
+        <header class="header" id="header"></header>
+        
+        <main class="content">
+            <!-- Cabeçalho da Página -->
+            <div class="page-header">
+                <div>
+                    <h1>Clientes e Pets</h1>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">
+                        Gerencie tutores, fichas de pets, histórico de serviços e compras
+                    </p>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-primary" onclick="abrirModalCliente()">
+                        <i data-lucide="user-plus"></i>
+                        <span>+ Novo Cliente</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cards Informativos (Estatísticas Rápidas) -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-total-clientes">0</div>
+                        <div class="stat-label">Total de Clientes</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="users"></i>
+                    </div>
+                </div>
+                <div class="stat-card accent">
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-total-pets">0</div>
+                        <div class="stat-label">Total de Pets</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="paw-print"></i>
+                    </div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-media-pets">0</div>
+                        <div class="stat-label">Média Pets / Tutor</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="heart"></i>
+                    </div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-novos-mes">0</div>
+                        <div class="stat-label">Cadastrados este Mês</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="calendar-plus"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros e Barra de Pesquisa -->
+            <div class="card mb-2" style="padding: 1.25rem 1.5rem;">
+                <div class="filters" style="margin-bottom: 0;">
+                    <div class="search-bar" style="flex: 2; min-width: 260px;">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="filtro-busca" placeholder="Buscar por cliente, pet, telefone, e-mail ou CPF..." oninput="aoDigitarBusca(event)">
+                    </div>
+
+                    <div class="filter-group">
+                        <select id="filtro-pets" onchange="aoMudarFiltro()">
+                            <option value="">Todos os clientes</option>
+                            <option value="com-pets">Apenas com pets</option>
+                            <option value="sem-pets">Sem pets cadastrados</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <select id="filtro-especie" onchange="aoMudarFiltro()">
+                            <option value="">Todas as espécies</option>
+                            <option value="Cão">Tutores de Cães</option>
+                            <option value="Gato">Tutores de Gatos</option>
+                            <option value="Outro">Outras Espécies</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <select id="filtro-ordenacao" onchange="aoMudarOrdenacaoSelect(this.value)">
+                            <option value="nome-asc">Nome (A-Z)</option>
+                            <option value="nome-desc">Nome (Z-A)</option>
+                            <option value="data-desc">Mais recentes</option>
+                            <option value="data-asc">Mais antigos</option>
+                            <option value="pets-desc">Mais pets</option>
+                            <option value="pets-asc">Menos pets</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-secondary btn-sm" id="btn-limpar-filtros" onclick="limparFiltros()" title="Limpar filtros">
+                        <i data-lucide="rotate-ccw"></i>
+                        <span>Limpar</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabela Principal de Clientes -->
+            <div class="table-container">
+                <div class="table-header">
+                    <span id="contagem-resultados" style="font-weight: 500; color: var(--text-secondary); font-size: 0.9rem;">
+                        Carregando clientes...
+                    </span>
+                    <div style="font-size: 0.8rem; color: var(--text-light);">
+                        Dica: Clique no nome do tutor para visualizar a ficha completa
+                    </div>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="tabela-clientes">
+                        <thead>
+                            <tr>
+                                <th class="sort-th" onclick="alternarOrdenacao('nome')">
+                                    Nome <span id="sort-icon-nome" class="sort-icon"></span>
+                                </th>
+                                <th class="sort-th" onclick="alternarOrdenacao('telefone')">
+                                    Telefone <span id="sort-icon-telefone" class="sort-icon"></span>
+                                </th>
+                                <th class="sort-th" onclick="alternarOrdenacao('petsCount')">
+                                    Qtd de Pets <span id="sort-icon-petsCount" class="sort-icon"></span>
+                                </th>
+                                <th class="sort-th" onclick="alternarOrdenacao('dataCadastro')">
+                                    Data de Cadastro <span id="sort-icon-dataCadastro" class="sort-icon"></span>
+                                </th>
+                                <th style="text-align: right; width: 140px;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-clientes-body">
+                            <!-- Renderizado via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Estado Vazio -->
+                <div class="empty-state" id="empty-state" style="display: none;">
+                    <i data-lucide="users"></i>
+                    <p id="empty-state-text">Nenhum cliente cadastrado</p>
+                    <span>Clique no botão "+ Novo Cliente" para adicionar o primeiro cadastro.</span>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-primary btn-sm" onclick="abrirModalCliente()">
+                            <i data-lucide="plus"></i> Novo Cliente
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Rodapé da Tabela com Paginação -->
+                <div class="table-footer" id="tabela-footer">
+                    <div id="info-paginacao">Exibindo 0 de 0 clientes</div>
+                    <div id="paginacao-container"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL 1: NOVO / EDITAR CLIENTE                           -->
+    <!-- ======================================================== -->
+    <div class="modal-overlay" id="modal-client">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-client-title">Novo Cliente</h2>
+                <button type="button" class="btn-icon modal-close" onclick="closeModal('modal-client')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <form id="form-cliente" onsubmit="salvarCliente(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="client-id">
+
+                    <div class="form-group">
+                        <label for="client-nome">Nome do Cliente / Tutor (Opcional)</label>
+                        <input type="text" id="client-nome" placeholder="Ex: Maria da Silva (ou deixe em branco se não souber)">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="client-telefone">Telefone / WhatsApp (Opcional)</label>
+                            <input type="text" id="client-telefone" placeholder="(11) 99999-9999" maxlength="15" oninput="aplicarMascaraTelefone(this)">
+                        </div>
+                        <div class="form-group">
+                            <label for="client-email">E-mail (Opcional)</label>
+                            <input type="email" id="client-email" placeholder="cliente@exemplo.com">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="client-cpf">CPF (Opcional)</label>
+                            <input type="text" id="client-cpf" placeholder="000.000.000-00" maxlength="14" oninput="aplicarMascaraCPF(this)">
+                        </div>
+                        <div class="form-group">
+                            <label for="client-endereco">Endereço (Opcional)</label>
+                            <input type="text" id="client-endereco" placeholder="Rua, número, bairro, cidade">
+                        </div>
+                    </div>
+
+                    <!-- Seção de Cadastro Rápido do Pet Junto com o Cliente -->
+                    <div style="background: #f0f7ff; border: 1px solid #cce3fd; border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1rem;">
+                        <div style="font-weight: 700; color: var(--primary); font-size: 0.95rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+                            <i data-lucide="paw-print"></i>
+                            Cadastrar Pet Deste Tutor Agora (Opcional)
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group" style="margin-bottom: 0.5rem;">
+                                <label for="client-pet-nome" style="font-size: 0.85rem;">Nome do Pet</label>
+                                <input type="text" id="client-pet-nome" placeholder="Ex: Rex, Thor, Pipoca">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0.5rem;">
+                                <label for="client-pet-especie" style="font-size: 0.85rem;">Espécie</label>
+                                <select id="client-pet-especie">
+                                    <option value="Cão">Cão</option>
+                                    <option value="Gato">Gato</option>
+                                    <option value="Outro">Outro</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="client-pet-raca" style="font-size: 0.85rem;">Raça</label>
+                                <input type="text" id="client-pet-raca" placeholder="Ex: Poodle, SRD, Shih Tzu">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="client-pet-porte" style="font-size: 0.85rem;">Porte</label>
+                                <select id="client-pet-porte">
+                                    <option value="P">Pequeno (P)</option>
+                                    <option value="M" selected>Médio (M)</option>
+                                    <option value="G">Grande (G)</option>
+                                    <option value="GG">Gigante (GG)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="client-observacoes">Observações Gerais (Opcional)</label>
+                        <textarea id="client-observacoes" rows="2" placeholder="Informações adicionais, preferências de contato, etc."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-client')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-salvar-cliente">
+                        <i data-lucide="check"></i> Salvar Cliente
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL 2: PERFIL COMPLETO DO CLIENTE                      -->
+    <!-- ======================================================== -->
+    <div class="modal-overlay" id="modal-profile">
+        <div class="modal modal-lg" style="max-height: 92vh;">
+            <div class="modal-header">
+                <h2>Ficha do Cliente & Pets</h2>
+                <button type="button" class="btn-icon modal-close" onclick="closeModal('modal-profile')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="padding-top: 1rem;">
+                <!-- Cabeçalho / Hero do Perfil -->
+                <div class="profile-hero">
+                    <div class="profile-hero-left">
+                        <div class="profile-avatar-lg" id="profile-avatar">M</div>
+                        <div class="profile-hero-info">
+                            <h3 id="profile-nome">Maria Silva</h3>
+                            <div class="profile-hero-meta">
+                                <span><i data-lucide="phone"></i> <strong id="profile-telefone">-</strong></span>
+                                <span><i data-lucide="mail"></i> <span id="profile-email">-</span></span>
+                                <span><i data-lucide="calendar"></i> Cliente desde <span id="profile-data-cadastro">-</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <button class="btn btn-secondary btn-sm" onclick="editarClienteDoPerfil()">
+                            <i data-lucide="edit-2"></i> Editar Dados
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="acionarAnonimizacaoPerfilLGPD()" style="border-color:#fecdd3; color:#e11d48; background:#fff1f2;" title="Anonimizar dados pessoais conforme Art. 18 da LGPD">
+                            <i data-lucide="shield-alert"></i> Anonimizar (LGPD)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Detalhes do Endereço / CPF / Observações -->
+                <div class="profile-details-grid">
+                    <div class="detail-item">
+                        <label>CPF</label>
+                        <p id="profile-cpf">-</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Endereço</label>
+                        <p id="profile-endereco">-</p>
+                    </div>
+                    <div class="detail-item" style="grid-column: 1 / -1;">
+                        <label>Observações</label>
+                        <p id="profile-observacoes" style="font-style: italic; color: var(--text-secondary);">-</p>
+                    </div>
+                </div>
+
+                <!-- Mini Estatísticas do Cliente -->
+                <div class="profile-stats-grid">
+                    <div class="profile-stat-item">
+                        <div class="val" id="profile-stat-pets">0</div>
+                        <div class="lbl">Pets Cadastrados</div>
+                    </div>
+                    <div class="profile-stat-item">
+                        <div class="val" id="profile-stat-atendimentos">0</div>
+                        <div class="lbl">Serviços Realizados</div>
+                    </div>
+                    <div class="profile-stat-item">
+                        <div class="val" id="profile-stat-total-gasto">R$ 0,00</div>
+                        <div class="lbl">Total em Compras & Serviços</div>
+                    </div>
+                </div>
+
+                <!-- Abas: Pets, Histórico de Serviços, Histórico de Compras -->
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="trocarAbaPerfil('pets', this)">
+                        <i data-lucide="paw-print"></i> Pets (<span id="profile-tab-count-pets">0</span>)
+                    </button>
+                    <button class="tab-btn" onclick="trocarAbaPerfil('servicos', this)">
+                        <i data-lucide="scissors"></i> Histórico de Serviços (<span id="profile-tab-count-servicos">0</span>)
+                    </button>
+                    <button class="tab-btn" onclick="trocarAbaPerfil('compras', this)">
+                        <i data-lucide="shopping-bag"></i> Histórico de Compras (<span id="profile-tab-count-compras">0</span>)
+                    </button>
+                </div>
+
+                <!-- Conteúdo Aba: Pets -->
+                <div class="tab-pane active" id="pane-perfil-pets">
+                    <div class="pets-section-header">
+                        <h3>Pets Vinculados</h3>
+                        <button class="btn btn-primary btn-sm" onclick="adicionarPetParaClienteAtual()">
+                            <i data-lucide="plus-circle"></i> + Adicionar Pet
+                        </button>
+                    </div>
+                    
+                    <div class="pet-cards-list" id="profile-pets-list">
+                        <!-- Cards de pets renderizados dinamicamente -->
+                    </div>
+
+                    <div class="empty-state" id="empty-state-pets" style="display: none; padding: 2rem 1rem;">
+                        <i data-lucide="paw-print"></i>
+                        <p>Nenhum pet cadastrado para este cliente</p>
+                        <span>Cadastre o primeiro pet clicando no botão acima.</span>
+                    </div>
+                </div>
+
+                <!-- Conteúdo Aba: Histórico de Serviços -->
+                <div class="tab-pane" id="pane-perfil-servicos">
+                    <div class="table-container" style="box-shadow: none; border: 1px solid var(--border);">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Data / Hora</th>
+                                    <th>Pet</th>
+                                    <th>Serviço</th>
+                                    <th>Profissional</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="profile-servicos-list">
+                                <!-- Lista de agendamentos -->
+                            </tbody>
+                        </table>
+                        <div class="empty-state" id="empty-state-servicos" style="display: none; padding: 2rem 1rem;">
+                            <i data-lucide="calendar-x"></i>
+                            <p>Nenhum agendamento encontrado</p>
+                            <span>Este cliente ainda não realizou agendamentos no sistema.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conteúdo Aba: Histórico de Compras -->
+                <div class="tab-pane" id="pane-perfil-compras">
+                    <div class="table-container" style="box-shadow: none; border: 1px solid var(--border);">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Itens Comprados</th>
+                                    <th>Pagamento</th>
+                                    <th style="text-align: right;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="profile-compras-list">
+                                <!-- Lista de vendas -->
+                            </tbody>
+                        </table>
+                        <div class="empty-state" id="empty-state-compras" style="display: none; padding: 2rem 1rem;">
+                            <i data-lucide="shopping-cart"></i>
+                            <p>Nenhuma compra registrada</p>
+                            <span>Este cliente ainda não realizou compras no PDV.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-profile')">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL 3: NOVO / EDITAR PET                               -->
+    <!-- ======================================================== -->
+    <div class="modal-overlay" id="modal-pet">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-pet-title">Novo Pet</h2>
+                <button type="button" class="btn-icon modal-close" onclick="closeModal('modal-pet')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <form id="form-pet" onsubmit="salvarPet(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="pet-id">
+                    <input type="hidden" id="pet-cliente-id">
+
+                    <!-- Upload de Foto do Pet -->
+                    <div class="photo-upload-wrapper">
+                        <div class="photo-upload-box" id="pet-photo-container" onclick="document.getElementById('pet-foto-input').click()" title="Clique para enviar uma foto">
+                            <img id="pet-foto-preview" src="" alt="Foto do Pet" style="display: none;">
+                            <div id="pet-foto-placeholder" style="display: flex; flex-direction: column; align-items: center;">
+                                <i data-lucide="camera"></i>
+                                <span>Enviar foto</span>
+                            </div>
+                        </div>
+                        <input type="file" id="pet-foto-input" accept="image/*" style="display: none;" onchange="aoSelecionarFotoPet(event)">
+                        <button type="button" class="btn btn-sm btn-secondary" id="btn-remover-foto-pet" style="display: none;" onclick="removerFotoPet()">
+                            <i data-lucide="trash-2"></i> Remover Foto
+                        </button>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="pet-nome">Nome do Pet *</label>
+                            <input type="text" id="pet-nome" required placeholder="Ex: Rex, Mel, Pipoca">
+                        </div>
+                        <div class="form-group">
+                            <label for="pet-especie">Espécie *</label>
+                            <select id="pet-especie" required onchange="aoMudarEspeciePet(this.value)">
+                                <option value="Cão">Cão</option>
+                                <option value="Gato">Gato</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="pet-raca">Raça</label>
+                            <input type="text" id="pet-raca" placeholder="Ex: Golden, Poodle, SRD (Vira-lata)">
+                        </div>
+                        <div class="form-group">
+                            <label for="pet-porte">Porte *</label>
+                            <select id="pet-porte" required>
+                                <option value="P">Pequeno (P)</option>
+                                <option value="M" selected>Médio (M)</option>
+                                <option value="G">Grande (G)</option>
+                                <option value="GG">Gigante (GG)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="pet-nascimento">Data de Nascimento</label>
+                            <input type="date" id="pet-nascimento">
+                        </div>
+                        <div class="form-group">
+                            <label for="pet-peso">Peso Estimado (kg)</label>
+                            <input type="number" id="pet-peso" step="0.1" min="0" max="150" placeholder="Ex: 8.5">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pet-alergias">Alergias ou Cuidados Especiais</label>
+                        <input type="text" id="pet-alergias" placeholder="Ex: Alergia a shampoo perfumado, não tosar patas traseiras...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pet-observacoes">Observações do Pet</label>
+                        <textarea id="pet-observacoes" rows="2" placeholder="Comportamento, preferências, histórico de saúde..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-pet')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-salvar-pet">
+                        <i data-lucide="check"></i> Salvar Pet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast container (gerenciado pelo app.js) -->
+    <div id="toast-container"></div>
+    
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="js/app.js"></script>
+    <script src="js/clientes.js"></script>
+</body>
+</html>

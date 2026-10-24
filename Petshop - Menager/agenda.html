@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetShop Manager - Agenda</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1E3A5F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="PetShop">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
+    <style>
+        /* === Estilos Específicos da Página de Agenda === */
+        .agenda-stats {
+            margin-bottom: 1.5rem;
+        }
+
+        .calendar-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .calendar-top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-light);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .calendar-nav-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .calendar-title-display {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-transform: capitalize;
+            min-width: 220px;
+        }
+
+        .calendar-controls-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .calendar-views {
+            display: flex;
+            background: var(--bg);
+            padding: 0.25rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            gap: 0.2rem;
+        }
+
+        .calendar-views .tab-btn {
+            padding: 0.45rem 1rem;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            border-bottom: none;
+            margin-bottom: 0;
+            font-weight: 500;
+        }
+
+        .calendar-views .tab-btn.active {
+            background: var(--primary);
+            color: #fff;
+            border-bottom: none;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Barra de Filtros e Busca */
+        .calendar-filter-bar {
+            display: flex;
+            align-items: center;
+            padding: 0.85rem 1.5rem;
+            background: #fafcff;
+            border-bottom: 1px solid var(--border-light);
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .calendar-filter-bar .search-bar {
+            max-width: 280px;
+            flex: 1;
+        }
+
+        .filter-select {
+            padding: 0.55rem 0.85rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .filter-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(91,164,230,0.15);
+        }
+
+        /* --- VISUALIZAÇÃO MENSAL --- */
+        .calendar-grid-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: var(--bg);
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .calendar-weekday-title {
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .calendar-month-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: var(--border-light);
+            gap: 1px;
+        }
+
+        .calendar-cell {
+            background: var(--bg-card);
+            min-height: 110px;
+            max-height: 145px;
+            padding: 0.45rem;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: var(--transition);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .calendar-cell:hover {
+            background: #f4f8fd;
+        }
+
+        .calendar-cell.other-month {
+            background: #fdfefe;
+            opacity: 0.45;
+        }
+
+        .calendar-cell.today {
+            background: #f0f7ff;
+            border-top: 3px solid var(--primary);
+        }
+
+        .calendar-cell-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.35rem;
+        }
+
+        .calendar-cell-num {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .calendar-cell.today .calendar-cell-num {
+            color: var(--primary);
+            font-weight: 700;
+            background: rgba(91, 164, 230, 0.15);
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .calendar-cell-add-btn {
+            opacity: 0;
+            transition: var(--transition);
+            border: none;
+            background: rgba(91, 164, 230, 0.15);
+            color: var(--primary-dark);
+            cursor: pointer;
+            font-size: 0.7rem;
+            padding: 2px 5px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .calendar-cell:hover .calendar-cell-add-btn {
+            opacity: 1;
+        }
+
+        .calendar-cell-events {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 2px;
+        }
+
+        .cal-event-pill {
+            padding: 0.25rem 0.45rem;
+            border-radius: 4px;
+            font-size: 0.73rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            border-left: 3px solid transparent;
+        }
+
+        .cal-event-pill:hover {
+            transform: translateX(2px);
+            filter: brightness(0.96);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .cal-event-pill.agendado {
+            background: var(--warning-light);
+            color: #9c6206;
+            border-left-color: var(--warning);
+        }
+
+        .cal-event-pill.em_andamento {
+            background: var(--info-light);
+            color: var(--primary-dark);
+            border-left-color: var(--primary);
+        }
+
+        .cal-event-pill.concluido {
+            background: var(--success-light);
+            color: #1a6d47;
+            border-left-color: var(--success);
+        }
+
+        .cal-event-pill.cancelado {
+            background: var(--danger-light);
+            color: #a82040;
+            border-left-color: var(--danger);
+            text-decoration: line-through;
+            opacity: 0.75;
+        }
+
+        .cal-more-events {
+            font-size: 0.7rem;
+            color: var(--primary);
+            font-weight: 600;
+            padding: 2px 4px;
+            text-align: right;
+            cursor: pointer;
+        }
+
+        /* --- VISUALIZAÇÃO SEMANAL --- */
+        .calendar-week-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: var(--border-light);
+            gap: 1px;
+            min-height: 520px;
+        }
+
+        .calendar-week-col {
+            background: var(--bg-card);
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .calendar-week-header {
+            padding: 0.85rem 0.5rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg);
+            transition: var(--transition);
+        }
+
+        .calendar-week-header.today {
+            background: #f0f7ff;
+            border-top: 3px solid var(--primary);
+        }
+
+        .week-day-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .week-day-num {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 2px;
+        }
+
+        .calendar-week-header.today .week-day-num {
+            color: var(--primary);
+        }
+
+        .calendar-week-body {
+            padding: 0.6rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            overflow-y: auto;
+            max-height: 580px;
+        }
+
+        .week-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--primary);
+            border-radius: var(--radius-sm);
+            padding: 0.6rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .week-card:hover {
+            box-shadow: var(--shadow-sm);
+            background: #fff;
+            transform: translateY(-2px);
+        }
+
+        .week-card.agendado { border-left-color: var(--warning); }
+        .week-card.em_andamento { border-left-color: var(--primary); }
+        .week-card.concluido { border-left-color: var(--success); }
+        .week-card.cancelado { border-left-color: var(--danger); opacity: 0.65; }
+
+        .week-card-time {
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+        }
+
+        .week-card-pet {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .week-card-service {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .week-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.4rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .week-col-empty {
+            text-align: center;
+            padding: 2rem 0.5rem;
+            color: var(--text-light);
+            font-size: 0.8rem;
+        }
+
+        /* --- VISUALIZAÇÃO DIÁRIA --- */
+        .daily-view-container {
+            padding: 1.5rem;
+        }
+
+        .daily-date-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding: 1rem 1.25rem;
+            background: var(--bg);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-light);
+        }
+
+        .daily-date-banner h3 {
+            font-size: 1.15rem;
+            color: var(--text-primary);
+            text-transform: capitalize;
+        }
+
+        .daily-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .daily-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.1rem 1.35rem;
+            border-radius: var(--radius);
+            background: var(--bg);
+            border-left: 4px solid var(--primary);
+            transition: var(--transition);
+            gap: 1.25rem;
+            cursor: pointer;
+        }
+
+        .daily-card:hover {
+            background: #fff;
+            box-shadow: var(--shadow-md);
+            transform: translateX(4px);
+        }
+
+        .daily-card.agendado { border-left-color: var(--warning); }
+        .daily-card.em_andamento { border-left-color: var(--primary); }
+        .daily-card.concluido { border-left-color: var(--success); }
+        .daily-card.cancelado { border-left-color: var(--danger); opacity: 0.75; }
+
+        .daily-card-time {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            min-width: 75px;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .daily-card-main {
+            flex: 1;
+        }
+
+        .daily-card-pet {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .daily-card-client {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 3px;
+        }
+
+        .daily-card-meta {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-top: 0.45rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            flex-wrap: wrap;
+        }
+
+        .daily-card-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .daily-card-price {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-align: right;
+            min-width: 100px;
+        }
+
+        .daily-card-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* --- MODAL DE DETALHES --- */
+        .detail-badge-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .detail-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .detail-item-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-item-value {
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .detail-item-value.highlight {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1.25rem;
+        }
+
+        .detail-actions-box {
+            background: var(--bg);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            margin-top: 1.25rem;
+            border: 1px solid var(--border-light);
+        }
+
+        .detail-actions-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .detail-status-buttons {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .payment-method-box {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .detail-notes-box {
+            background: #fff8e6;
+            border-left: 3px solid var(--warning);
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            color: #794d02;
+            margin-top: 1rem;
+        }
+
+        .revenue-registered-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.65rem 1rem;
+            border-radius: var(--radius-sm);
+            background: var(--success-light);
+            color: var(--success);
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 900px) {
+            .calendar-grid-header, .calendar-month-grid, .calendar-week-grid {
+                overflow-x: auto;
+            }
+            .calendar-cell {
+                min-height: 80px;
+            }
+            .detail-info-grid {
+                grid-template-columns: 1fr;
+            }
+            .daily-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .daily-card-price {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body data-page="agenda">
+    <!-- Sidebar é injetada por app.js -->
+    <nav class="sidebar" id="sidebar"></nav>
+    
+    <div class="main-wrapper">
+        <!-- Header é injetado por app.js -->
+        <header class="header" id="header"></header>
+        
+        <main class="content">
+            <!-- Cabeçalho da Página com Ações -->
+            <div class="page-header">
+                <div>
+                    <h1>Agenda</h1>
+                    <span class="text-secondary" style="font-size: 0.9rem;">Gerencie os agendamentos de banho, tosa e serviços</span>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-secondary" onclick="abrirModalPacotes()">
+                        <i data-lucide="award" style="color:var(--accent);"></i> Planos & Pacotes
+                    </button>
+                    <button class="btn btn-primary" onclick="openNewAppointmentModal()">
+                        <i data-lucide="plus"></i> Novo Agendamento
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cards com Indicadores Rápidos -->
+            <div class="stats-grid agenda-stats">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-total-today">0</div>
+                        <div class="stat-label">Total Hoje</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="calendar"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card warning">
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-agendados-today">0</div>
+                        <div class="stat-label">Agendados Hoje</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="clock"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-andamento-today">0</div>
+                        <div class="stat-label">Em Andamento Hoje</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="play-circle"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card success">
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-concluidos-today">0</div>
+                        <div class="stat-label">Concluídos Hoje</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="check-circle-2"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cartão Principal do Calendário -->
+            <div class="calendar-card">
+                <!-- Barra Superior do Calendário (Navegação + Título + Abas de Visão) -->
+                <div class="calendar-top-bar">
+                    <div class="calendar-nav-group">
+                        <button class="btn btn-secondary btn-sm" id="btn-prev" title="Anterior">
+                            <i data-lucide="chevron-left"></i>
+                        </button>
+                        <button class="btn btn-secondary btn-sm" id="btn-today">Hoje</button>
+                        <button class="btn btn-secondary btn-sm" id="btn-next" title="Próximo">
+                            <i data-lucide="chevron-right"></i>
+                        </button>
+                        <h2 class="calendar-title-display" id="calendar-title">Outubro de 2024</h2>
+                    </div>
+
+                    <div class="calendar-controls-right">
+                        <!-- Abas de Visão (Diário, Semanal, Mensal, Kanban) -->
+                        <div class="calendar-views">
+                            <button class="tab-btn" data-view="kanban">
+                                <i data-lucide="columns" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:2px;"></i> Fila Banho (Kanban)
+                            </button>
+                            <button class="tab-btn" data-view="diario">Diário</button>
+                            <button class="tab-btn" data-view="semanal">Semanal</button>
+                            <button class="tab-btn active" data-view="mensal">Mensal</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Barra de Filtros e Busca Rápida -->
+                <div class="calendar-filter-bar">
+                    <div class="search-bar">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="agenda-search-input" placeholder="Buscar cliente, pet ou serviço...">
+                    </div>
+
+                    <div class="filter-group">
+                        <select id="agenda-filter-employee" class="filter-select">
+                            <option value="">Todos os profissionais</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <select id="agenda-filter-status" class="filter-select">
+                            <option value="">Todos os status</option>
+                            <option value="agendado">Agendado</option>
+                            <option value="em_andamento">Em Andamento</option>
+                            <option value="concluido">Concluído</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 1. Visão Mensal (Padrão) -->
+                <div id="calendar-view-mensal" class="calendar-view-pane">
+                    <div class="calendar-grid-header">
+                        <div class="calendar-weekday-title">Dom</div>
+                        <div class="calendar-weekday-title">Seg</div>
+                        <div class="calendar-weekday-title">Ter</div>
+                        <div class="calendar-weekday-title">Qua</div>
+                        <div class="calendar-weekday-title">Qui</div>
+                        <div class="calendar-weekday-title">Sex</div>
+                        <div class="calendar-weekday-title">Sáb</div>
+                    </div>
+                    <div class="calendar-month-grid" id="month-grid-cells">
+                        <!-- Células geradas via JS -->
+                    </div>
+                </div>
+
+                <!-- 2. Visão Semanal -->
+                <div id="calendar-view-semanal" class="calendar-view-pane" style="display: none;">
+                    <div class="calendar-week-grid" id="week-grid-cells">
+                        <!-- 7 colunas geradas via JS -->
+                    </div>
+                </div>
+
+                <!-- 3. Visão Diária -->
+                <div id="calendar-view-diario" class="calendar-view-pane" style="display: none;">
+                    <div class="daily-view-container">
+                        <div class="daily-date-banner">
+                            <div>
+                                <h3 id="daily-banner-title">Quinta-feira, 24 de Outubro de 2024</h3>
+                                <span class="text-secondary" id="daily-banner-count" style="font-size: 0.85rem;">0 agendamentos</span>
+                            </div>
+                            <button class="btn btn-primary btn-sm" onclick="openNewAppointmentModal(currentISODate())">
+                                <i data-lucide="plus"></i> Novo Agendamento Neste Dia
+                            </button>
+                        </div>
+                        <div class="daily-timeline" id="daily-appointments-list">
+                            <!-- Lista gerada via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Visão Kanban Banho & Tosa -->
+                <div id="calendar-view-kanban" class="calendar-view-pane" style="display: none;">
+                    <div style="padding: 1rem 1.5rem 0.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; background: #fafcff; border-bottom: 1px solid var(--border-light);">
+                        <div>
+                            <h3 style="font-size: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
+                                <i data-lucide="sparkles" style="color: var(--primary); width: 18px; height: 18px;"></i>
+                                Fila Operacional de Banho & Tosa (Hoje)
+                            </h3>
+                            <span class="text-secondary" style="font-size: 0.8rem;">Arraste os cards ou use os botões rápidos para avançar as etapas do pet</span>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-primary btn-sm" onclick="openNewAppointmentModal(currentISODate())">
+                                <i data-lucide="plus"></i> Novo Pet na Fila
+                            </button>
+                        </div>
+                    </div>
+                    <div class="kanban-board" id="kanban-board-container">
+                        <!-- Colunas geradas via JS -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL 1: Novo / Editar Agendamento -->
+    <div class="modal-overlay" id="modal-appointment">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2 id="modal-appointment-title">Novo Agendamento</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-appointment')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <form id="appointment-form" onsubmit="handleAppointmentSubmit(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="appointment-id">
+
+                    <!-- Linha 1: Cliente e Pet -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="appointment-client-input">Cliente / Tutor *</label>
+                            <div class="combobox-wrapper" id="combobox-client-wrapper">
+                                <input type="hidden" id="appointment-client" required>
+                                <input type="text" id="appointment-client-input" class="combobox-input" placeholder="Digite o nome ou telefone do cliente..." autocomplete="off" oninput="filtrarDropdownClientes(this.value)" onfocus="abrirDropdownClientes()">
+                                <i data-lucide="chevron-down" class="combobox-icon"></i>
+                                <div class="combobox-dropdown" id="dropdown-clientes-list">
+                                    <!-- Itens filtrados via JS -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                <label for="appointment-pet" style="margin-bottom: 0;">Pet *</label>
+                                <button type="button" class="btn btn-sm" id="btn-quick-add-pet" onclick="abrirModalRapidoNovoPet()" style="padding: 0.15rem 0.45rem; font-size: 0.75rem; background: #e8f4fd; color: var(--primary); border: 1px solid #cce3fd; display: none;">
+                                    <i data-lucide="plus" style="width: 12px; height: 12px;"></i> + Cadastrar Pet
+                                </button>
+                            </div>
+                            <select id="appointment-pet" required disabled onchange="handlePetSelectChange()">
+                                <option value="">Selecione um cliente primeiro...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Linha 2: Serviço e Profissional -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="appointment-service">Serviço *</label>
+                            <select id="appointment-service" required onchange="handleServiceSelectChange()">
+                                <option value="">Selecione o serviço...</option>
+                                <option value="Banho">Banho</option>
+                                <option value="Tosa">Tosa</option>
+                                <option value="Banho+Tosa">Banho+Tosa</option>
+                                <option value="Tosa Higiênica">Tosa Higiênica</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="appointment-employee">Profissional *</label>
+                            <select id="appointment-employee" required>
+                                <option value="">Selecione o profissional...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Linha 3: Data, Horário e Status -->
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label for="appointment-date">Data *</label>
+                            <input type="date" id="appointment-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="appointment-time">Horário *</label>
+                            <input type="time" id="appointment-time" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="appointment-status">Status</label>
+                            <select id="appointment-status">
+                                <option value="agendado">Agendado</option>
+                                <option value="em_andamento">Em Andamento</option>
+                                <option value="concluido">Concluído</option>
+                                <option value="cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Linha 4: Tipo de Entrega, Valor e Status do Pagamento -->
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label for="appointment-delivery">Retirada / Entrega *</label>
+                            <select id="appointment-delivery">
+                                <option value="buscar">Tutor vem buscar 🐾</option>
+                                <option value="entregar">Leva & Traz (Entregar) 🚗</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="appointment-payment-status">Pagamento *</label>
+                            <select id="appointment-payment-status">
+                                <option value="pendente">⏳ Pagar na entrega/retirada</option>
+                                <option value="pago_pix">✅ Já Pago (Pix)</option>
+                                <option value="pago_cartao">✅ Já Pago (Cartão)</option>
+                                <option value="pago_dinheiro">✅ Já Pago (Dinheiro)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="appointment-value">Valor (R$) *</label>
+                            <input type="number" id="appointment-value" step="0.01" min="0" placeholder="0,00" required>
+                            <small id="service-price-hint" class="text-muted" style="display:block;margin-top:4px;font-size:0.75rem;"></small>
+                        </div>
+                    </div>
+
+                    <!-- Linha 5: Observações -->
+                    <div class="form-group">
+                        <label for="appointment-notes">Observações</label>
+                        <textarea id="appointment-notes" placeholder="Ex: Cão idoso, alérgico a perfume, endereço para entrega..." rows="2" style="min-height:42px;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-appointment')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="check"></i> Salvar Agendamento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL WHATSAPP: Enviar mensagem para o tutor -->
+    <div class="modal-overlay" id="modal-whatsapp">
+        <div class="modal modal-md">
+            <div class="modal-header" style="background:#25D366; color:white; border-radius: var(--radius-lg) var(--radius-lg) 0 0;">
+                <h2 style="color:white; display:flex; align-items:center; gap:0.5rem; font-size:1.15rem;">
+                    <i data-lucide="message-circle"></i> Enviar Mensagem no WhatsApp
+                </h2>
+                <button class="btn-icon modal-close" style="color:white;" onclick="closeModal('modal-whatsapp')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="wpp-appointment-id">
+                
+                <div style="background:var(--bg); padding:0.85rem 1rem; border-radius:var(--radius-sm); margin-bottom:1rem; border:1px solid var(--border-light);">
+                    <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.25rem;">Destinatário:</div>
+                    <div style="font-weight:700; font-size:1rem; color:var(--text-primary);" id="wpp-destinatario-nome">Maria Silva</div>
+                    <div style="font-size:0.85rem; color:var(--primary); font-weight:600;" id="wpp-destinatario-tel">(11) 99999-1234</div>
+                </div>
+
+                <div class="form-group">
+                    <label style="font-weight:600;">Selecione o Modelo de Mensagem:</label>
+                    <select id="wpp-template-select" class="filter-select" style="width:100%; padding:0.6rem; font-weight:500;" onchange="atualizarTextoWhatsApp()">
+                        <option value="pronto_buscar">🐾 "Pet Pronto! Pode vir buscar" (Com carinho)</option>
+                        <option value="indo_entregar">🚗 "Estamos a caminho para entregar seu Pet!"</option>
+                        <option value="lembrete_hoje">⏰ "Lembrete do Agendamento de Hoje"</option>
+                        <option value="personalizado">✏️ Mensagem Personalizada</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="wpp-mensagem-texto" style="font-weight:600;">Mensagem que será enviada:</label>
+                    <textarea id="wpp-mensagem-texto" rows="6" style="width:100%; border:1px solid var(--border); border-radius:var(--radius-sm); padding:0.75rem; font-size:0.9rem; line-height:1.5; resize:vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-whatsapp')">Cancelar</button>
+                <button type="button" class="btn btn-whatsapp" onclick="dispararWhatsApp()">
+                    <i data-lucide="send"></i> Abrir WhatsApp Web / App
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Visualizar Detalhes do Agendamento -->
+    <div class="modal-overlay" id="modal-details">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2>Detalhes do Agendamento</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-details')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="details-modal-body">
+                <!-- Conteúdo injetado via JS -->
+            </div>
+            <div class="modal-footer" id="details-modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-details')">Fechar</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-details-print-ficha" style="color:var(--primary); border-color:var(--primary);">
+                    <i data-lucide="printer"></i> Ficha de Baia / Gaiola
+                </button>
+                <button type="button" class="btn btn-danger btn-sm" id="btn-details-delete">
+                    <i data-lucide="trash-2"></i> Excluir
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" id="btn-details-edit">
+                    <i data-lucide="edit-2"></i> Editar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Planos & Pacotes Mensais de Banho & Tosa -->
+    <div class="modal-overlay" id="modal-pacotes">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2>🐾 Planos e Pacotes Mensais de Banho & Tosa</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-pacotes')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Abas do Modal de Pacotes -->
+                <div class="tabs" style="margin-bottom:1rem;">
+                    <button class="tab-btn active" id="tab-btn-pacotes-ativos" onclick="switchPacotesModalTab('ativos')">
+                        Pacotes Ativos
+                    </button>
+                    <button class="tab-btn" id="tab-btn-novo-pacote" onclick="switchPacotesModalTab('novo')">
+                        + Vender Novo Pacote
+                    </button>
+                </div>
+
+                <!-- Aba 1: Pacotes Ativos -->
+                <div id="pane-pacotes-ativos">
+                    <div id="lista-pacotes-ativos">
+                        <!-- Carregado via JS -->
+                    </div>
+                </div>
+
+                <!-- Aba 2: Novo Pacote -->
+                <div id="pane-novo-pacote" style="display:none;">
+                    <form id="form-novo-pacote" onsubmit="salvarNovoPacote(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pacote-cliente">Cliente / Tutor *</label>
+                                <select id="pacote-cliente" required onchange="handlePacoteClientChange()">
+                                    <option value="">Selecione o cliente...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="pacote-pet">Pet Beneficiado *</label>
+                                <select id="pacote-pet" required disabled>
+                                    <option value="">Selecione um cliente primeiro...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pacote-tipo">Tipo de Plano *</label>
+                                <select id="pacote-tipo" required onchange="handlePacoteTipoChange()">
+                                    <option value="4_banhos">Pacote 4 Banhos Mensais (1 por semana)</option>
+                                    <option value="4_banhos_1_tosa">Pacote 4 Banhos + 1 Tosa Geral</option>
+                                    <option value="2_banhos_quinzenal">Pacote 2 Banhos Quinzenais</option>
+                                    <option value="personalizado">Plano Personalizado</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="pacote-sessoes">Quantidade Total de Banhos *</label>
+                                <input type="number" id="pacote-sessoes" min="1" max="24" value="4" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pacote-valor">Valor Total do Pacote (R$) *</label>
+                                <input type="number" id="pacote-valor" step="0.01" min="0" value="140.00" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="pacote-pagamento">Forma de Pagamento *</label>
+                                <select id="pacote-pagamento" required>
+                                    <option value="Pix">Pix (Recomendado)</option>
+                                    <option value="Cartão Crédito">Cartão de Crédito</option>
+                                    <option value="Cartão Débito">Cartão de Débito</option>
+                                    <option value="Dinheiro">Dinheiro</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer" style="padding-right:0; padding-left:0; margin-top:1.5rem;">
+                            <button type="submit" class="btn btn-primary">
+                                <i data-lucide="check-circle"></i> Vender e Ativar Pacote
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-pacotes')">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: Cadastro Rápido de Novo Pet (dentro da Agenda) -->
+    <div class="modal-overlay" id="modal-quick-pet">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>🐾 Cadastrar Novo Pet</h2>
+                <button type="button" class="btn-icon modal-close" onclick="closeModal('modal-quick-pet')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <form id="form-quick-pet" onsubmit="salvarQuickPet(event)">
+                <div class="modal-body">
+                    <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;" id="quick-pet-tutor-info">
+                        Tutor: <strong>-</strong>
+                    </div>
+                    <div class="form-group">
+                        <label for="quick-pet-nome">Nome do Pet *</label>
+                        <input type="text" id="quick-pet-nome" placeholder="Ex: Bob, Mel, Luna..." required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="quick-pet-especie">Espécie *</label>
+                            <select id="quick-pet-especie">
+                                <option value="Cão">Cão</option>
+                                <option value="Gato">Gato</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="quick-pet-porte">Porte *</label>
+                            <select id="quick-pet-porte">
+                                <option value="P">Pequeno (P)</option>
+                                <option value="M" selected>Médio (M)</option>
+                                <option value="G">Grande (G)</option>
+                                <option value="GG">Gigante (GG)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="quick-pet-raca">Raça (Opcional)</label>
+                        <input type="text" id="quick-pet-raca" placeholder="Ex: Poodle, SRD, Shih Tzu...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-quick-pet')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="check"></i> Cadastrar Pet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+    
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="js/app.js"></script>
+    <script src="js/agenda.js"></script>
+</body>
+</html>

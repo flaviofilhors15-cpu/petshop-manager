@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetShop Manager - Financeiro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1E3A5F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="PetShop">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
+</head>
+<body data-page="financeiro">
+    <!-- Sidebar é injetada por app.js -->
+    <nav class="sidebar" id="sidebar"></nav>
+    
+    <div class="main-wrapper">
+        <!-- Header é injetado por app.js -->
+        <header class="header" id="header"></header>
+        
+        <main class="content">
+            <!-- Cabeçalho da Página -->
+            <div class="page-header">
+                <div>
+                    <h1>Controle Financeiro</h1>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">
+                        Acompanhe faturamento, receitas de vendas e serviços, e gerencie despesas operacionais.
+                    </p>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-secondary" onclick="exportFinanceReport()">
+                        <i data-lucide="printer"></i>
+                        <span>Imprimir Relatório</span>
+                    </button>
+                    <button class="btn btn-primary" onclick="openExpenseModal()">
+                        <i data-lucide="plus-circle"></i>
+                        <span>Nova Despesa</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navegação por Abas -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="tab-resumo" onclick="switchFinanceTab('tab-resumo')">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Resumo Geral</span>
+                </button>
+                <button class="tab-btn" data-tab="tab-receitas" onclick="switchFinanceTab('tab-receitas')">
+                    <i data-lucide="trending-up"></i>
+                    <span>Receitas</span>
+                </button>
+                <button class="tab-btn" data-tab="tab-despesas" onclick="switchFinanceTab('tab-despesas')">
+                    <i data-lucide="trending-down"></i>
+                    <span>Despesas</span>
+                </button>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- ABA 1: RESUMO -->
+            <!-- ============================================== -->
+            <div class="tab-pane active" id="tab-resumo">
+                <!-- Filtro de Período do Resumo -->
+                <div class="card mb-2" style="padding: 1rem 1.25rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                            <label for="resumo-periodo" style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
+                                <i data-lucide="calendar"></i> Período de Análise:
+                            </label>
+                            <div class="filter-group">
+                                <select id="resumo-periodo" onchange="onResumoPeriodChange()">
+                                    <option value="mes_atual" selected>Este Mês</option>
+                                    <option value="mes_anterior">Mês Anterior</option>
+                                    <option value="ultimos_30">Últimos 30 Dias</option>
+                                    <option value="ultimos_90">Últimos 90 Dias</option>
+                                    <option value="ano_atual">Este Ano</option>
+                                    <option value="todos">Todo o Histórico</option>
+                                    <option value="personalizado">Personalizado</option>
+                                </select>
+                            </div>
+                            <div id="resumo-custom-dates" style="display: none; align-items: center; gap: 0.5rem;">
+                                <input type="date" id="resumo-data-inicio" class="table-input" style="max-width: 140px; text-align: left;" onchange="renderResumoTab()">
+                                <span style="color: var(--text-light);">até</span>
+                                <input type="date" id="resumo-data-fim" class="table-input" style="max-width: 140px; text-align: left;" onchange="renderResumoTab()">
+                            </div>
+                        </div>
+                        <div id="resumo-periodo-badge" style="font-size: 0.85rem; color: var(--text-secondary);">
+                            Período: <strong id="resumo-periodo-texto">-</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cards de Estatísticas -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <div class="stat-value text-primary" id="kpi-faturamento">R$ 0,00</div>
+                            <div class="stat-label">Faturamento Bruto</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i data-lucide="dollar-sign"></i>
+                        </div>
+                    </div>
+
+                    <div class="stat-card danger">
+                        <div class="stat-info">
+                            <div class="stat-value text-danger" id="kpi-despesas">R$ 0,00</div>
+                            <div class="stat-label">Total de Despesas</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i data-lucide="arrow-down-right"></i>
+                        </div>
+                    </div>
+
+                    <div class="stat-card success" id="card-lucro-liquido">
+                        <div class="stat-info">
+                            <div class="stat-value text-success" id="kpi-lucro">R$ 0,00</div>
+                            <div class="stat-label">Lucro Líquido</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i data-lucide="trending-up"></i>
+                        </div>
+                    </div>
+
+                    <div class="stat-card accent">
+                        <div class="stat-info">
+                            <div class="stat-value" id="kpi-margem">0,0%</div>
+                            <div class="stat-label">Margem de Lucro</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i data-lucide="percent"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráficos do Resumo -->
+                <div class="grid-2">
+                    <div class="chart-container">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                            <h3>Receitas vs Despesas (Mensal)</h3>
+                            <span class="badge badge-info">Comparativo 6 meses</span>
+                        </div>
+                        <canvas id="chartReceitasDespesas" height="260"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                            <h3>Distribuição de Despesas</h3>
+                            <span class="badge badge-warning">Por Categoria</span>
+                        </div>
+                        <canvas id="chartDespesasCategoria" height="260"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- ABA 2: RECEITAS -->
+            <!-- ============================================== -->
+            <div class="tab-pane" id="tab-receitas">
+                <!-- Filtros de Receitas -->
+                <div class="card mb-2" style="padding: 1rem 1.25rem;">
+                    <div class="filters" style="margin-bottom: 0;">
+                        <div class="search-bar">
+                            <i data-lucide="search"></i>
+                            <input type="text" id="rec-search" placeholder="Buscar por descrição ou cliente..." oninput="onFilterReceitas()">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <select id="rec-categoria" onchange="onFilterReceitas()">
+                                <option value="">Todas as Categorias</option>
+                                <option value="Produto">Venda de Produtos</option>
+                                <option value="Serviço">Serviços Pet</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <select id="rec-pagamento" onchange="onFilterReceitas()">
+                                <option value="">Todas as Formas de Pgto</option>
+                                <option value="Pix">Pix</option>
+                                <option value="Cartão Crédito">Cartão de Crédito</option>
+                                <option value="Cartão Débito">Cartão de Débito</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <input type="date" id="rec-data-inicio" title="Data Inicial" onchange="onFilterReceitas()">
+                        </div>
+                        <div class="filter-group">
+                            <input type="date" id="rec-data-fim" title="Data Final" onchange="onFilterReceitas()">
+                        </div>
+
+                        <button class="btn btn-secondary btn-sm" onclick="clearReceitasFilters()" title="Limpar Filtros">
+                            <i data-lucide="rotate-ccw"></i> Limpar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabela de Receitas -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <h3 style="font-size: 1rem; color: var(--text-primary);">Lista de Receitas</h3>
+                            <span class="badge badge-success" id="rec-total-count">0 registros</span>
+                        </div>
+                        <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">
+                            Total no período: <span class="text-success" id="rec-total-valor">R$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 120px;">Data</th>
+                                <th>Descrição</th>
+                                <th style="width: 140px;">Categoria</th>
+                                <th style="width: 160px;">Forma de Pgto</th>
+                                <th style="width: 130px; text-align: right;">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rec-table-body">
+                            <!-- Preenchido dinamicamente -->
+                        </tbody>
+                    </table>
+
+                    <div class="table-footer">
+                        <div id="rec-pagination-info">Mostrando 0 de 0 receitas</div>
+                        <div id="receitas-pagination"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- ABA 3: DESPESAS -->
+            <!-- ============================================== -->
+            <div class="tab-pane" id="tab-despesas">
+                <!-- Filtros de Despesas -->
+                <div class="card mb-2" style="padding: 1rem 1.25rem;">
+                    <div class="filters" style="margin-bottom: 0;">
+                        <div class="search-bar">
+                            <i data-lucide="search"></i>
+                            <input type="text" id="desp-search" placeholder="Buscar despesa..." oninput="onFilterDespesas()">
+                        </div>
+
+                        <div class="filter-group">
+                            <select id="desp-categoria" onchange="onFilterDespesas()">
+                                <option value="">Todas as Categorias</option>
+                                <!-- Preenchido dinamicamente das configurações -->
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <select id="desp-recorrente" onchange="onFilterDespesas()">
+                                <option value="">Todas as Despesas</option>
+                                <option value="recorrente">Apenas Recorrentes</option>
+                                <option value="pontual">Apenas Pontuais</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <input type="date" id="desp-data-inicio" title="Data Inicial" onchange="onFilterDespesas()">
+                        </div>
+                        <div class="filter-group">
+                            <input type="date" id="desp-data-fim" title="Data Final" onchange="onFilterDespesas()">
+                        </div>
+
+                        <button class="btn btn-secondary btn-sm" onclick="clearDespesasFilters()" title="Limpar Filtros">
+                            <i data-lucide="rotate-ccw"></i> Limpar
+                        </button>
+
+                        <button class="btn btn-primary btn-sm" style="margin-left: auto;" onclick="openExpenseModal()">
+                            <i data-lucide="plus"></i> Nova Despesa
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabela de Despesas -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <h3 style="font-size: 1rem; color: var(--text-primary);">Despesas Operacionais</h3>
+                            <span class="badge badge-danger" id="desp-total-count">0 registros</span>
+                        </div>
+                        <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">
+                            Total no período: <span class="text-danger" id="desp-total-valor">R$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 120px;">Data</th>
+                                <th>Descrição</th>
+                                <th style="width: 150px;">Categoria</th>
+                                <th style="width: 130px; text-align: center;">Recorrente</th>
+                                <th style="width: 130px; text-align: right;">Valor</th>
+                                <th style="width: 100px; text-align: center;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="desp-table-body">
+                            <!-- Preenchido dinamicamente -->
+                        </tbody>
+                    </table>
+
+                    <div class="table-footer">
+                        <div id="desp-pagination-info">Mostrando 0 de 0 despesas</div>
+                        <div id="despesas-pagination"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: NOVA / EDITAR DESPESA -->
+    <!-- ============================================== -->
+    <div class="modal-overlay" id="modal-despesa">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2 id="modal-despesa-titulo">Nova Despesa</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-despesa')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-despesa" onsubmit="saveExpense(event)">
+                    <input type="hidden" id="despesa-id">
+                    
+                    <div class="form-group">
+                        <label for="despesa-descricao">Descrição <span class="text-danger">*</span></label>
+                        <input type="text" id="despesa-descricao" required placeholder="Ex: Conta de luz, Aluguel...">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="despesa-categoria">Categoria <span class="text-danger">*</span></label>
+                            <select id="despesa-categoria" required>
+                                <!-- Preenchido dinamicamente -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="despesa-valor">Valor (R$) <span class="text-danger">*</span></label>
+                            <input type="number" id="despesa-valor" step="0.01" min="0.01" required placeholder="0,00">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="despesa-data">Data de Competência <span class="text-danger">*</span></label>
+                        <input type="date" id="despesa-data" required>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: normal;">
+                            <input type="checkbox" id="despesa-recorrente" style="width: auto; cursor: pointer;">
+                            <span>Despesa recorrente mensal</span>
+                        </label>
+                        <span style="font-size: 0.75rem; color: var(--text-light); margin-left: 1.5rem; display: block;">
+                            Indica contas fixas mensais como aluguel, salários, internet.
+                        </span>
+                    </div>
+
+                    <div class="modal-footer" style="padding: 1rem 0 0; margin-top: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-despesa')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="btn-salvar-despesa">Salvar Despesa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: VISUALIZAÇÃO DE IMPRESSÃO / RELATÓRIO -->
+    <!-- ============================================== -->
+    <div class="modal-overlay" id="modal-imprimir-financeiro">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2>Relatório Financeiro para Impressão</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-imprimir-financeiro')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="print-area">
+                <!-- Conteúdo gerado dinamicamente para impressão -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-imprimir-financeiro')">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="window.print()">
+                    <i data-lucide="printer"></i> Imprimir / Salvar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+    
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/financeiro.js"></script>
+</body>
+</html>
