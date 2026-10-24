@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetShop Manager - Dashboard</title>
+    <meta name="description" content="PetShop Manager - Sistema completo de gestão SaaS para pet shops, banho e tosa com Kanban, PDV e controle de estoque de ração.">
+    <meta property="og:title" content="PetShop Manager - Plataforma de Gestão para Pet Shops">
+    <meta property="og:description" content="Controle de banho e tosa com Kanban, Fichas de Baia, PDV, estoque, WhatsApp e conformidade LGPD.">
+    <meta property="og:type" content="website">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1E3A5F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="PetShop">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
+</head>
+<body data-page="dashboard">
+    <!-- Sidebar é injetada por app.js -->
+    <nav class="sidebar" id="sidebar"></nav>
+    
+    <div class="main-wrapper">
+        <!-- Header é injetado por app.js -->
+        <header class="header" id="header"></header>
+        
+        <main class="content">
+            <!-- Cabeçalho da página -->
+            <div class="page-header">
+                <div>
+                    <h1>Dashboard</h1>
+                    <p class="text-muted" id="data-atual-extenso">Visão geral do pet shop</p>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-secondary" onclick="recarregarDashboard()" title="Atualizar dados do painel">
+                        <i data-lucide="refresh-cw"></i> Atualizar
+                    </button>
+                    <a href="vendas.html" class="btn btn-success">
+                        <i data-lucide="shopping-cart"></i> Nova Venda
+                    </a>
+                    <a href="agenda.html" class="btn btn-primary">
+                        <i data-lucide="calendar-plus"></i> Novo Agendamento
+                    </a>
+                </div>
+            </div>
+
+            <!-- Grid de Estatísticas (4 Cards) -->
+            <div class="stats-grid">
+                <!-- Faturamento do Mês -->
+                <div class="stat-card accent">
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-faturamento">R$ 0,00</div>
+                        <div class="stat-label">Faturamento do Mês</div>
+                        <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 4px;" id="stat-faturamento-sub">Receitas acumuladas</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="dollar-sign"></i>
+                    </div>
+                </div>
+
+                <!-- Lucro Líquido -->
+                <div class="stat-card" id="card-lucro">
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-lucro">R$ 0,00</div>
+                        <div class="stat-label">Lucro Líquido</div>
+                        <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 4px;" id="stat-lucro-sub">Faturamento - Despesas</div>
+                    </div>
+                    <div class="stat-icon" id="icon-lucro">
+                        <i data-lucide="wallet"></i>
+                    </div>
+                </div>
+
+                <!-- Margem de Lucro (%) -->
+                <div class="stat-card" id="card-margem">
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-margem">0,0%</div>
+                        <div class="stat-label">Margem de Lucro</div>
+                        <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 4px;" id="stat-margem-sub">Rentabilidade no mês</div>
+                    </div>
+                    <div class="stat-icon" id="icon-margem">
+                        <i data-lucide="percent"></i>
+                    </div>
+                </div>
+
+                <!-- Agendamentos de Hoje -->
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-agendamentos">0</div>
+                        <div class="stat-label">Agendamentos de Hoje</div>
+                        <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 4px;" id="stat-agendamentos-sub">0 pendentes</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="calendar"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid de 2 Colunas com Gráficos: Linha (Faturamento) e Torta (Serviços) -->
+            <div class="grid-2">
+                <div class="chart-container">
+                    <div class="d-flex align-center justify-between mb-2">
+                        <h3><i data-lucide="trending-up" style="width: 18px; height: 18px; vertical-align: -3px; margin-right: 6px; color: var(--primary);"></i> Faturamento dos Últimos 6 Meses</h3>
+                    </div>
+                    <div style="position: relative; height: 260px; width: 100%;">
+                        <canvas id="chart-faturamento"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="d-flex align-center justify-between mb-2">
+                        <h3><i data-lucide="pie-chart" style="width: 18px; height: 18px; vertical-align: -3px; margin-right: 6px; color: var(--primary);"></i> Serviços Mais Realizados</h3>
+                    </div>
+                    <div style="position: relative; height: 260px; width: 100%;">
+                        <canvas id="chart-servicos"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico de Barra: Top 5 Produtos Mais Vendidos -->
+            <div class="chart-container">
+                <div class="d-flex align-center justify-between mb-2">
+                    <h3><i data-lucide="award" style="width: 18px; height: 18px; vertical-align: -3px; margin-right: 6px; color: var(--accent);"></i> Top 5 Produtos Mais Vendidos</h3>
+                    <a href="vendas.html" class="btn btn-sm btn-secondary">
+                        <i data-lucide="shopping-cart"></i> Ver Vendas
+                    </a>
+                </div>
+                <div style="position: relative; height: 260px; width: 100%;">
+                    <canvas id="chart-produtos"></canvas>
+                </div>
+            </div>
+
+            <!-- Grid de 2 Colunas: Agendamentos de Hoje e Alertas de Estoque -->
+            <div class="grid-2">
+                <!-- Lista de Agendamentos de Hoje -->
+                <div class="card">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+                        <h3 style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem; margin: 0;">
+                            <i data-lucide="calendar-check" style="color: var(--primary); width: 20px; height: 20px;"></i>
+                            Agendamentos de Hoje
+                            <span class="badge badge-info" id="badge-total-hoje">0</span>
+                        </h3>
+                        <a href="agenda.html" class="btn btn-sm btn-secondary">
+                            Ver Agenda Completa <i data-lucide="arrow-right"></i>
+                        </a>
+                    </div>
+                    <div id="lista-agendamentos-hoje">
+                        <!-- Carregado dinamicamente -->
+                    </div>
+                </div>
+
+                <!-- Card de Alertas de Estoque -->
+                <div class="alert-card">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+                        <h3 style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem; margin: 0;">
+                            <i data-lucide="alert-triangle" style="color: var(--warning); width: 20px; height: 20px;"></i>
+                            Alertas de Estoque
+                            <span class="badge badge-danger" id="badge-total-estoque-baixo">0</span>
+                        </h3>
+                        <a href="estoque.html" class="btn btn-sm btn-secondary">
+                            Ir para Estoque <i data-lucide="arrow-right"></i>
+                        </a>
+                    </div>
+                    <div id="lista-alertas-estoque">
+                        <!-- Carregado dinamicamente -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Reposição Rápida de Estoque -->
+    <div class="modal-overlay" id="modalReporEstoque">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>Repor Estoque</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modalReporEstoque')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="repor-produto-id">
+                <div class="form-group">
+                    <label>Produto</label>
+                    <input type="text" id="repor-produto-nome" readonly style="background: var(--bg); font-weight: 500;">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Estoque Atual</label>
+                        <input type="text" id="repor-estoque-atual" readonly style="background: var(--bg);">
+                    </div>
+                    <div class="form-group">
+                        <label>Estoque Mínimo</label>
+                        <input type="text" id="repor-estoque-minimo" readonly style="background: var(--bg);">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="repor-quantidade">Quantidade a Adicionar</label>
+                    <input type="number" id="repor-quantidade" min="1" value="10" placeholder="Ex: 10" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modalReporEstoque')">Cancelar</button>
+                <button class="btn btn-primary" onclick="salvarReposicaoEstoque()">
+                    <i data-lucide="check"></i> Confirmar Entrada
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Alteração de Status de Agendamento -->
+    <div class="modal-overlay" id="modalStatusAgendamento">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>Atualizar Agendamento</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modalStatusAgendamento')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="status-agendamento-id">
+                <div class="form-group">
+                    <label>Pet / Tutor</label>
+                    <input type="text" id="status-agendamento-pet" readonly style="background: var(--bg);">
+                </div>
+                <div class="form-group">
+                    <label>Serviço e Horário</label>
+                    <input type="text" id="status-agendamento-servico" readonly style="background: var(--bg);">
+                </div>
+                <div class="form-group">
+                    <label for="status-agendamento-novo">Alterar Status</label>
+                    <select id="status-agendamento-novo">
+                        <option value="agendado">Agendado</option>
+                        <option value="em_andamento">Em Andamento</option>
+                        <option value="concluido">Concluído</option>
+                        <option value="cancelado">Cancelado</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modalStatusAgendamento')">Fechar</button>
+                <button class="btn btn-primary" onclick="confirmarAtualizacaoStatus()">
+                    <i data-lucide="check"></i> Salvar Alteração
+                </button>
+            </div>
+        </div>
+    <!-- MODAL WHATSAPP: Enviar mensagem para o tutor -->
+    <div class="modal-overlay" id="modal-whatsapp">
+        <div class="modal modal-md">
+            <div class="modal-header" style="background:#25D366; color:white; border-radius: var(--radius-lg) var(--radius-lg) 0 0;">
+                <h2 style="color:white; display:flex; align-items:center; gap:0.5rem; font-size:1.15rem;">
+                    <i data-lucide="message-circle"></i> Enviar Mensagem no WhatsApp
+                </h2>
+                <button class="btn-icon modal-close" style="color:white;" onclick="closeModal('modal-whatsapp')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="wpp-appointment-id">
+                
+                <div style="background:var(--bg); padding:0.85rem 1rem; border-radius:var(--radius-sm); margin-bottom:1rem; border:1px solid var(--border-light);">
+                    <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.25rem;">Destinatário:</div>
+                    <div style="font-weight:700; font-size:1rem; color:var(--text-primary);" id="wpp-destinatario-nome">Maria Silva</div>
+                    <div style="font-size:0.85rem; color:var(--primary); font-weight:600;" id="wpp-destinatario-tel">(11) 99999-1234</div>
+                </div>
+
+                <div class="form-group">
+                    <label style="font-weight:600;">Selecione o Modelo de Mensagem:</label>
+                    <select id="wpp-template-select" class="filter-select" style="width:100%; padding:0.6rem; font-weight:500;" onchange="atualizarTextoWhatsApp()">
+                        <option value="pronto_buscar">🐾 "Pet Pronto! Pode vir buscar" (Com carinho)</option>
+                        <option value="indo_entregar">🚗 "Estamos a caminho para entregar seu Pet!"</option>
+                        <option value="lembrete_hoje">⏰ "Lembrete do Agendamento de Hoje"</option>
+                        <option value="personalizado">✏️ Mensagem Personalizada</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="wpp-mensagem-texto" style="font-weight:600;">Mensagem que será enviada:</label>
+                    <textarea id="wpp-mensagem-texto" rows="6" style="width:100%; border:1px solid var(--border); border-radius:var(--radius-sm); padding:0.75rem; font-size:0.9rem; line-height:1.5; resize:vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-whatsapp')">Cancelar</button>
+                <button type="button" class="btn btn-whatsapp" onclick="dispararWhatsApp()">
+                    <i data-lucide="send"></i> Abrir WhatsApp Web / App
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+    
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

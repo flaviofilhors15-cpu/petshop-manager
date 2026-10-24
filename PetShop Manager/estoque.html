@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetShop Manager - Estoque</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1E3A5F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="PetShop">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
+    <style>
+        /* Estilos adicionais para a página de Estoque */
+        .stock-preview-box {
+            background: var(--bg);
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            margin-top: 1rem;
+            border: 1px dashed var(--border);
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+
+        .stock-preview-item .label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stock-preview-item .val {
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        .product-thumb {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            background: var(--info-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .sortable-th {
+            cursor: pointer;
+            user-select: none;
+            transition: var(--transition);
+        }
+
+        .sortable-th:hover {
+            color: var(--primary);
+            background: rgba(91, 164, 230, 0.08) !important;
+        }
+
+        .sortable-th i {
+            width: 14px;
+            height: 14px;
+            vertical-align: middle;
+            margin-left: 0.25rem;
+            opacity: 0.6;
+        }
+
+        .margin-indicator {
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            display: inline-block;
+        }
+
+        .margin-high {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .margin-mid {
+            background: var(--warning-light);
+            color: var(--warning);
+        }
+
+        .margin-low {
+            background: var(--danger-light);
+            color: var(--danger);
+        }
+    </style>
+</head>
+<body data-page="estoque">
+    <!-- Sidebar é injetada por app.js -->
+    <nav class="sidebar" id="sidebar"></nav>
+    
+    <div class="main-wrapper">
+        <!-- Header é injetado por app.js -->
+        <header class="header" id="header"></header>
+        
+        <main class="content">
+            <!-- Cabeçalho da Página -->
+            <div class="page-header">
+                <div>
+                    <h1>Controle de Estoque</h1>
+                    <p class="text-muted" style="margin-top: 0.25rem;">Inventário de produtos, controle de custos, margens e movimentações</p>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-secondary" onclick="abrirModalEtiquetas()">
+                        <i data-lucide="tag"></i>
+                        Etiquetas
+                    </button>
+                    <button class="btn btn-secondary" onclick="abrirModalFracionamento()" style="background:#fff7ed; color:#c2410c; border-color:#fed7aa;">
+                        <i data-lucide="scale"></i>
+                        Fracionar Granel
+                    </button>
+                    <button class="btn btn-secondary" onclick="abrirModalListaCompras()" style="background:#eef7ee; color:#2e7d32; border-color:#c8e6c9;">
+                        <i data-lucide="shopping-cart"></i>
+                        Lista de Compras
+                    </button>
+                    <button class="btn btn-secondary" onclick="abrirModalHistoricoMovimentacoes()">
+                        <i data-lucide="history"></i>
+                        Histórico
+                    </button>
+                    <button class="btn btn-secondary" onclick="openStockMovementModal()">
+                        <i data-lucide="arrow-left-right"></i>
+                        Movimentar
+                    </button>
+                    <button class="btn btn-primary" onclick="openNewProductModal()">
+                        <i data-lucide="plus"></i>
+                        Novo Produto
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cards de Métricas Rápidas (Grid de 5 métricas essenciais) -->
+            <div class="stats-grid" style="grid-template-columns: repeat(5, 1fr);">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-total-produtos">0</div>
+                        <div class="stat-label">Total de Produtos</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="package"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card accent">
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-valor-estoque">R$ 0,00</div>
+                        <div class="stat-label">Valor Venda (Estoque)</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="dollar-sign"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card warning">
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-estoque-baixo">0</div>
+                        <div class="stat-label">Estoque Baixo</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="alert-triangle"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card danger">
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-esgotados">0</div>
+                        <div class="stat-label">Itens Esgotados</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="x-circle"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card warning" id="card-validade" style="border-left-color: #d97706;">
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-vencendo-mes" style="color: #d97706;">0</div>
+                        <div class="stat-label">Vencendo em breve</div>
+                    </div>
+                    <div class="stat-icon" style="background:#fef3c7; color:#d97706;">
+                        <i data-lucide="calendar-alert"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Barra de Filtros e Busca -->
+            <div class="card mb-2" style="padding: 1.25rem;">
+                <div class="filters" style="margin-bottom: 0;">
+                    <div class="search-bar" style="max-width: 350px;">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="estoque-search-input" placeholder="Buscar por nome, SKU, fornecedor..." oninput="handleEstoqueSearch()">
+                    </div>
+
+                    <div class="filter-group">
+                        <select id="estoque-category-filter" onchange="handleEstoqueCategoryFilter()">
+                            <option value="">Todas as Categorias</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <select id="estoque-status-filter" onchange="handleEstoqueStatusFilter()">
+                            <option value="">Todos os Status</option>
+                            <option value="ok">Estoque OK</option>
+                            <option value="baixo">Estoque Baixo</option>
+                            <option value="esgotado">Esgotado</option>
+                            <option value="vencendo">⚠️ Vencendo em 30 dias</option>
+                            <option value="vencido">🛑 Já Vencido</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-left: auto;">
+                        <button class="btn btn-secondary btn-sm" onclick="clearEstoqueFilters()">
+                            <i data-lucide="rotate-ccw"></i>
+                            Limpar Filtros
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela Principal de Produtos -->
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">Item</th>
+                            <th class="sortable-th" onclick="handleSort('nome')">
+                                Nome <i data-lucide="chevrons-up-down" id="sort-icon-nome"></i>
+                            </th>
+                            <th class="sortable-th" onclick="handleSort('categoria')">
+                                Categoria <i data-lucide="chevrons-up-down" id="sort-icon-categoria"></i>
+                            </th>
+                            <th class="sortable-th" onclick="handleSort('sku')">
+                                SKU <i data-lucide="chevrons-up-down" id="sort-icon-sku"></i>
+                            </th>
+                            <th class="sortable-th" onclick="handleSort('precoCusto')">
+                                Custo <i data-lucide="chevrons-up-down" id="sort-icon-precoCusto"></i>
+                            </th>
+                            <th class="sortable-th" onclick="handleSort('precoVenda')">
+                                Venda <i data-lucide="chevrons-up-down" id="sort-icon-precoVenda"></i>
+                            </th>
+                            <th class="sortable-th" onclick="handleSort('margem')">
+                                Margem <i data-lucide="chevrons-up-down" id="sort-icon-margem"></i>
+                            </th>
+                            <th class="sortable-th" onclick="handleSort('estoque')">
+                                Saldo <i data-lucide="chevrons-up-down" id="sort-icon-estoque"></i>
+                            </th>
+                            <th class="sortable-th" onclick="handleSort('validade')">
+                                Validade <i data-lucide="chevrons-up-down" id="sort-icon-validade"></i>
+                            </th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="estoque-table-body">
+                        <!-- Linhas renderizadas dinamicamente por estoque.js -->
+                    </tbody>
+                </table>
+
+                <div class="table-footer">
+                    <span id="estoque-table-info">Mostrando 0 produtos</span>
+                    <div id="estoque-pagination"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: NOVO / EDITAR PRODUTO -->
+    <div class="modal-overlay" id="modal-produto">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2 id="modal-product-title">Novo Produto</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-produto')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-produto" onsubmit="event.preventDefault(); saveProduct();">
+                    <input type="hidden" id="product-id">
+
+                    <!-- Linha 1: Nome e Categoria -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="product-nome">Nome do Produto <span class="text-danger">*</span></label>
+                            <input type="text" id="product-nome" placeholder="Ex: Ração Premium Frango 15kg" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="product-categoria">Categoria <span class="text-danger">*</span></label>
+                            <select id="product-categoria" required>
+                                <!-- Preenchido dinamicamente -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Linha 2: SKU, Fornecedor e Estoque Mínimo -->
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label for="product-sku">Código SKU</label>
+                            <input type="text" id="product-sku" placeholder="Ex: RAC001">
+                        </div>
+                        <div class="form-group">
+                            <label for="product-fornecedor">Fornecedor</label>
+                            <input type="text" id="product-fornecedor" placeholder="Ex: PetDist Distribuidora">
+                        </div>
+                        <div class="form-group">
+                            <label for="product-estoque-minimo">Estoque Mínimo (Alerta)</label>
+                            <input type="number" id="product-estoque-minimo" min="0" value="5" required>
+                        </div>
+                    </div>
+
+                    <!-- Linha 3: Financeiro - Preço Custo, Preço Venda e Margem Automática -->
+                    <div class="form-row-3" style="background: #fafcff; padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-light); margin-bottom: 1rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="product-preco-custo">Preço de Custo (R$) <span class="text-danger">*</span></label>
+                            <input type="number" id="product-preco-custo" min="0" step="0.01" placeholder="0,00" required oninput="calculateModalMargin()">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="product-preco-venda">Preço de Venda (R$) <span class="text-danger">*</span></label>
+                            <input type="number" id="product-preco-venda" min="0" step="0.01" placeholder="0,00" required oninput="calculateModalMargin()">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="product-margem">Margem de Lucro Bruta</label>
+                            <div style="position: relative;">
+                                <input type="text" id="product-margem" readonly style="background: #edf2f7; font-weight: 700; cursor: not-allowed;" value="0.00 %">
+                            </div>
+                            <small class="text-muted" style="font-size: 0.72rem;">Cálculo: ((Venda - Custo) / Venda) &times; 100</small>
+                        </div>
+                    </div>
+
+                    <!-- Linha 4: Unidade de Medida, Validade e Estoque Inicial -->
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label for="product-unidade">Unidade de Medida</label>
+                            <select id="product-unidade">
+                                <option value="un">Unidade (un)</option>
+                                <option value="kg">Quilo (kg) - A Granel</option>
+                                <option value="pct">Pacote (pct)</option>
+                                <option value="cx">Caixa (cx)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="product-validade">Data de Validade</label>
+                            <input type="date" id="product-validade">
+                        </div>
+                        <div class="form-group" id="group-estoque-inicial">
+                            <label for="product-estoque">Estoque Atual</label>
+                            <input type="number" id="product-estoque" min="0" step="0.1" value="0">
+                        </div>
+                    </div>
+
+                    <!-- Linha 5: Descrição -->
+                    <div class="form-group">
+                        <label for="product-descricao">Descrição Resumida</label>
+                        <textarea id="product-descricao" placeholder="Informações adicionais do produto, raça indicada, etc." rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-produto')">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveProduct()">
+                    <i data-lucide="check"></i>
+                    Salvar Produto
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: MOVIMENTAÇÃO DE ESTOQUE -->
+    <div class="modal-overlay" id="modal-movimentacao">
+        <div class="modal modal-md">
+            <div class="modal-header">
+                <h2>
+                    <i data-lucide="arrow-left-right" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 0.35rem; color: var(--primary);"></i>
+                    Movimentação de Estoque
+                </h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-movimentacao')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-movimentacao" onsubmit="event.preventDefault(); saveStockMovement();">
+                    <div class="form-group">
+                        <label for="mov-product-select">Produto <span class="text-danger">*</span></label>
+                        <select id="mov-product-select" required onchange="handleMovementProductChange()">
+                            <!-- Preenchido dinamicamente -->
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="mov-tipo">Tipo de Movimentação <span class="text-danger">*</span></label>
+                            <select id="mov-tipo" required onchange="updateMovementPreview()">
+                                <option value="entrada">Entrada (+) - Compra / Reposição</option>
+                                <option value="saida">Saída (-) - Ajuste / Perda / Baixa</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="mov-quantidade">Quantidade <span class="text-danger">*</span></label>
+                            <input type="number" id="mov-quantidade" min="1" value="1" required oninput="updateMovementPreview()">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mov-motivo">Motivo / Justificativa <span class="text-danger">*</span></label>
+                        <input type="text" id="mov-motivo" placeholder="Ex: Reposição de estoque de fornecedor" required>
+                    </div>
+
+                    <!-- Caixa de Prévia do Estoque -->
+                    <div class="stock-preview-box">
+                        <div class="stock-preview-item">
+                            <div class="label">Estoque Atual</div>
+                            <div class="val" id="prev-estoque-atual">0 un.</div>
+                        </div>
+                        <div class="stock-preview-item">
+                            <div class="label">Operação</div>
+                            <div class="val text-primary" id="prev-operacao">+ 1 un.</div>
+                        </div>
+                        <div class="stock-preview-item">
+                            <div class="label">Novo Estoque Estimado</div>
+                            <div class="val text-success" id="prev-novo-estoque">1 un.</div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-movimentacao')">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveStockMovement()">
+                    <i data-lucide="check-circle"></i>
+                    Confirmar Movimentação
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: LISTA DE COMPRAS AUTOMÁTICA (FORNECEDOR) -->
+    <div class="modal-overlay" id="modal-lista-compras">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2>
+                    <i data-lucide="shopping-cart" style="color:var(--success); width:20px; height:20px; vertical-align:middle; margin-right:4px;"></i>
+                    Lista de Compras / Sugestão de Reposição
+                </h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-lista-compras')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="background:#f4fbf5; border:1px solid #c8e6c9; border-radius:var(--radius-sm); padding:1rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                    <div>
+                        <strong style="color:#2e7d32; font-size:0.95rem;">Sugestão Inteligente de Pedido:</strong>
+                        <div style="font-size:0.85rem; color:#388e3c; margin-top:2px;">
+                            Itens que atingiram o estoque mínimo ou estão esgotados, prontos para enviar ao fornecedor.
+                        </div>
+                    </div>
+                    <button class="btn btn-whatsapp btn-sm" onclick="enviarPedidoFornecedorWhatsApp()">
+                        <i data-lucide="message-circle"></i> Enviar Pedido via WhatsApp
+                    </button>
+                </div>
+
+                <div class="table-container" style="max-height: 320px; overflow-y: auto; box-shadow:none; border:1px solid var(--border);">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Fornecedor</th>
+                                <th>Estoque Atual</th>
+                                <th>Estoque Mínimo</th>
+                                <th>Qtd Sugerida</th>
+                                <th>Custo Unit.</th>
+                                <th>Subtotal Estimado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-compras-tbody">
+                            <!-- Injetado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding:0.75rem 1rem; background:var(--bg); border-radius:var(--radius-sm); border:1px solid var(--border-light);">
+                    <span style="font-size:0.9rem; color:var(--text-secondary);" id="compras-resumo-itens">0 itens sugeridos</span>
+                    <span style="font-size:1.15rem; font-weight:700; color:var(--text-primary);">
+                        Investimento Estimado: <strong id="compras-total-estimado" style="color:var(--primary);">R$ 0,00</strong>
+                    </span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-lista-compras')">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="copiarListaComprasTexto()">
+                    <i data-lucide="copy"></i> Copiar Texto do Pedido
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: IMPRESSÃO DE ETIQUETAS DE PREÇO / GÔNDOLA -->
+    <div class="modal-overlay" id="modal-etiquetas">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2>
+                    <i data-lucide="tag" style="color:var(--primary); width:20px; height:20px; vertical-align:middle; margin-right:4px;"></i>
+                    Gerador de Etiquetas de Preço e Gôndola
+                </h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-etiquetas')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+                    <div style="font-size:0.85rem; color:var(--text-secondary);">
+                        Selecione a categoria ou imprima de todos os produtos cadastrados:
+                    </div>
+                    <div style="display:flex; gap:0.5rem;">
+                        <select id="etiquetas-categoria-select" class="filter-select" onchange="renderEtiquetasPreview()">
+                            <option value="">Todas as Categorias</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" onclick="window.print()">
+                            <i data-lucide="printer"></i> Imprimir Folha de Etiquetas
+                        </button>
+                    </div>
+                </div>
+
+                <div id="printable-labels-area">
+                    <div class="labels-print-grid" id="etiquetas-grid-container">
+                        <!-- Etiquetas renderizadas dinamicamente -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-etiquetas')">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: FRACIONAMENTO DE RAÇÃO (SACO -> GRANEL) -->
+    <div class="modal-overlay" id="modal-fracionamento">
+        <div class="modal modal-md">
+            <div class="modal-header">
+                <h2>
+                    <i data-lucide="scale" style="color:#c2410c; width:20px; height:20px; vertical-align:middle; margin-right:4px;"></i>
+                    Fracionar Ração (Saco &rarr; Granel kg)
+                </h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-fracionamento')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted" style="font-size:0.85rem; margin-bottom:1rem;">
+                    Abra sacos fechados de ração e converta automaticamente o estoque em quilos (kg) para venda avulsa a granel.
+                </p>
+                <form id="form-fracionamento" onsubmit="event.preventDefault(); executarFracionamento();">
+                    <div class="form-group">
+                        <label for="frac-saco-select">Saco Fechado de Origem (unidade) <span class="text-danger">*</span></label>
+                        <select id="frac-saco-select" required onchange="handleFracSacoChange()">
+                            <!-- Preenchido com produtos em sacos/unidades -->
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="frac-qtd-sacos">Qtd de Sacos a Abrir <span class="text-danger">*</span></label>
+                            <input type="number" id="frac-qtd-sacos" min="1" value="1" required oninput="calcularFracionamentoPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label for="frac-peso-saco">Peso por Saco (kg) <span class="text-danger">*</span></label>
+                            <input type="number" id="frac-peso-saco" min="0.1" step="0.1" value="15" required oninput="calcularFracionamentoPreview()">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="frac-destino-select">Produto Destino (Granel kg) <span class="text-danger">*</span></label>
+                        <select id="frac-destino-select" required>
+                            <!-- Preenchido com produtos em kg ou opção de criar -->
+                        </select>
+                    </div>
+
+                    <div class="stock-preview-box" style="background:#fffbf5; border-color:#fed7aa;">
+                        <div class="stock-preview-item">
+                            <div class="label">Saco Original</div>
+                            <div class="val text-danger" id="prev-frac-saco">- 1 un.</div>
+                        </div>
+                        <div class="stock-preview-item">
+                            <div class="label">Conversão</div>
+                            <div class="val" style="color:#c2410c;">&rarr;</div>
+                        </div>
+                        <div class="stock-preview-item">
+                            <div class="label">Entrada no Granel</div>
+                            <div class="val text-success" id="prev-frac-granel">+ 15.0 kg</div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-fracionamento')">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="executarFracionamento()" style="background:#c2410c; border-color:#c2410c;">
+                    <i data-lucide="check-circle"></i> Confirmar Fracionamento
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: HISTÓRICO DE MOVIMENTAÇÕES DE ESTOQUE -->
+    <div class="modal-overlay" id="modal-historico-movimentacoes">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2>
+                    <i data-lucide="history" style="color:var(--primary); width:20px; height:20px; vertical-align:middle; margin-right:4px;"></i>
+                    Histórico de Movimentações de Estoque
+                </h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-historico-movimentacoes')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="table-container" style="max-height: 380px; overflow-y: auto; box-shadow:none; border:1px solid var(--border);">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Produto</th>
+                                <th>Tipo</th>
+                                <th>Qtd</th>
+                                <th>Motivo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historico-movimentacoes-tbody">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-historico-movimentacoes')">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+    
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="js/app.js"></script>
+    <script src="js/estoque.js"></script>
+</body>
+</html>

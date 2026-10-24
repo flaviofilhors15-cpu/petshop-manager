@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetShop Manager - Relatórios</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1E3A5F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="PetShop">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
+</head>
+<body data-page="relatorios">
+    <!-- Sidebar é injetada por app.js -->
+    <nav class="sidebar" id="sidebar"></nav>
+    
+    <div class="main-wrapper">
+        <!-- Header é injetado por app.js -->
+        <header class="header" id="header"></header>
+        
+        <main class="content">
+            <!-- Cabeçalho da Página -->
+            <div class="page-header">
+                <div>
+                    <h1>Relatórios e Desempenho</h1>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">
+                        Visão analítica de faturamento, rentabilidade, serviços e fidelização de clientes.
+                    </p>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-secondary" onclick="exportReportCSV()">
+                        <i data-lucide="file-spreadsheet"></i>
+                        <span>Exportar CSV</span>
+                    </button>
+                    <button class="btn btn-primary" onclick="printReport()">
+                        <i data-lucide="printer"></i>
+                        <span>Imprimir Relatório</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtro de Período dos Relatórios -->
+            <div class="card mb-2" style="padding: 1rem 1.25rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                        <label for="rel-periodo" style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
+                            <i data-lucide="filter"></i> Período do Relatório:
+                        </label>
+                        <div class="filter-group">
+                            <select id="rel-periodo" onchange="onReportPeriodChange()">
+                                <option value="mes_atual" selected>Mês Atual</option>
+                                <option value="mes_anterior">Mês Anterior</option>
+                                <option value="ultimos_90">Últimos 90 Dias</option>
+                                <option value="ano_atual">Ano Atual</option>
+                                <option value="todos">Todo o Histórico</option>
+                                <option value="personalizado">Personalizado</option>
+                            </select>
+                        </div>
+                        <div id="rel-custom-dates" style="display: none; align-items: center; gap: 0.5rem;">
+                            <input type="date" id="rel-data-inicio" class="table-input" style="max-width: 140px; text-align: left;" onchange="updateAllReports()">
+                            <span style="color: var(--text-light);">até</span>
+                            <input type="date" id="rel-data-fim" class="table-input" style="max-width: 140px; text-align: left;" onchange="updateAllReports()">
+                        </div>
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                        Exibindo dados de: <strong id="rel-periodo-label">-</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRID COM OS 6 CARDS DE KPIS -->
+            <div class="kpi-grid">
+                <!-- 1. Faturamento Mensal/Período -->
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <div class="stat-value text-primary" id="rep-kpi-faturamento">R$ 0,00</div>
+                        <div class="stat-label">Faturamento no Período</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="dollar-sign"></i>
+                    </div>
+                </div>
+
+                <!-- 2. Lucro Líquido -->
+                <div class="stat-card success" id="rep-card-lucro">
+                    <div class="stat-info">
+                        <div class="stat-value text-success" id="rep-kpi-lucro">R$ 0,00</div>
+                        <div class="stat-label">Lucro Líquido</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="trending-up"></i>
+                    </div>
+                </div>
+
+                <!-- 3. Margem de Lucro (%) -->
+                <div class="stat-card accent">
+                    <div class="stat-info">
+                        <div class="stat-value" id="rep-kpi-margem">0,0%</div>
+                        <div class="stat-label">Margem de Lucro</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="percent"></i>
+                    </div>
+                </div>
+
+                <!-- 4. Ticket Médio -->
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <div class="stat-value" id="rep-kpi-ticket">R$ 0,00</div>
+                        <div class="stat-label">Ticket Médio por Transação</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="shopping-bag"></i>
+                    </div>
+                </div>
+
+                <!-- 5. Total Atendimentos -->
+                <div class="stat-card warning">
+                    <div class="stat-info">
+                        <div class="stat-value text-warning" id="rep-kpi-atendimentos">0</div>
+                        <div class="stat-label">Atendimentos Concluídos</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="calendar"></i>
+                    </div>
+                </div>
+
+                <!-- 6. Taxa de Retorno de Clientes -->
+                <div class="stat-card success">
+                    <div class="stat-info">
+                        <div class="stat-value text-success" id="rep-kpi-retorno">0%</div>
+                        <div class="stat-label">Taxa de Retorno (Fidelidade)</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i data-lucide="heart-handshake"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRÁFICOS: GRID 2X2 -->
+            <div class="grid-2">
+                <!-- Gráfico 1: Linha - Faturamento por Mês -->
+                <div class="chart-container">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                        <h3>Evolução do Faturamento Mensal</h3>
+                        <span class="badge badge-info">Histórico 6 Meses</span>
+                    </div>
+                    <canvas id="chartFaturamentoMensal" height="260"></canvas>
+                </div>
+
+                <!-- Gráfico 2: Barra - Receitas vs Despesas -->
+                <div class="chart-container">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                        <h3>Receitas vs Despesas Operacionais</h3>
+                        <span class="badge badge-warning">Comparativo</span>
+                    </div>
+                    <canvas id="chartReceitasDespesasRel" height="260"></canvas>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <!-- Gráfico 3: Pizza - Serviços por Tipo -->
+                <div class="chart-container">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                        <h3>Serviços Realizados por Tipo</h3>
+                        <span class="badge badge-success">Distribuição</span>
+                    </div>
+                    <canvas id="chartServicosTipo" height="260"></canvas>
+                </div>
+
+                <!-- Gráfico 4: Rosca - Vendas por Forma de Pagamento -->
+                <div class="chart-container">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                        <h3>Recebimentos por Forma de Pagamento</h3>
+                        <span class="badge badge-neutral">Participação</span>
+                    </div>
+                    <canvas id="chartVendasPagamento" height="260"></canvas>
+                </div>
+            </div>
+
+            <!-- TABELA RESUMIDA DE DESEMPENHO MENSAL -->
+            <div class="table-container mb-3">
+                <div class="table-header">
+                    <h3 style="font-size: 1rem; color: var(--text-primary);">Desempenho Histórico Consolidado</h3>
+                    <span class="badge badge-neutral">Últimos Meses</span>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Mês / Ano</th>
+                            <th style="text-align: right;">Receitas</th>
+                            <th style="text-align: right;">Despesas</th>
+                            <th style="text-align: right;">Resultado Líquido</th>
+                            <th style="text-align: center;">Margem</th>
+                            <th style="text-align: center;">Atendimentos</th>
+                            <th style="text-align: right;">Ticket Médio</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rel-tabela-desempenho">
+                        <!-- Preenchido dinamicamente via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+    
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/relatorios.js"></script>
+</body>
+</html>

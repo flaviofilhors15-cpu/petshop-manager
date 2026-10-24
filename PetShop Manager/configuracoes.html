@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetShop Manager - Configurações</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1E3A5F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="PetShop">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
+</head>
+<body data-page="configuracoes">
+    <!-- Sidebar é injetada por app.js -->
+    <nav class="sidebar" id="sidebar"></nav>
+    
+    <div class="main-wrapper">
+        <!-- Header é injetado por app.js -->
+        <header class="header" id="header"></header>
+        
+        <main class="content">
+            <!-- Cabeçalho da Página -->
+            <div class="page-header">
+                <div>
+                    <h1>Configurações do Sistema</h1>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">
+                        Personalize os dados do pet shop, tabela de preços, expediente, categorias e backups.
+                    </p>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-secondary" onclick="resetToDemoData()">
+                        <i data-lucide="rotate-ccw"></i>
+                        <span>Restaurar Dados Demo</span>
+                    </button>
+                    <button class="btn btn-primary" onclick="saveAllSettings()">
+                        <i data-lucide="save"></i>
+                        <span>Salvar Todas as Configurações</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- SEÇÃO 1: DADOS DO PET SHOP -->
+            <div class="card mb-3">
+                <div class="settings-section-title">
+                    <i data-lucide="store" style="color: var(--primary);"></i>
+                    <span>Dados do Estabelecimento</span>
+                </div>
+                <div class="settings-section-desc">
+                    Informações cadastrais exibidas em orçamentos, relatórios impressos e cabeçalhos.
+                </div>
+
+                <form id="form-empresa" onsubmit="saveCompanySettings(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cfg-nome-fantasia">Nome Fantasia <span class="text-danger">*</span></label>
+                            <input type="text" id="cfg-nome-fantasia" required placeholder="PetShop Manager">
+                        </div>
+                        <div class="form-group">
+                            <label for="cfg-cnpj">CNPJ</label>
+                            <input type="text" id="cfg-cnpj" placeholder="00.000.000/0001-00">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cfg-telefone">Telefone / WhatsApp</label>
+                            <input type="text" id="cfg-telefone" placeholder="(11) 3333-4444">
+                        </div>
+                        <div class="form-group">
+                            <label for="cfg-endereco">Endereço Completo</label>
+                            <input type="text" id="cfg-endereco" placeholder="Av. Principal, 123 - Centro">
+                        </div>
+                    </div>
+
+                    <div class="form-row" style="align-items: center;">
+                        <div class="form-group flex-1">
+                            <label for="cfg-logo">URL do Logotipo</label>
+                            <input type="text" id="cfg-logo" placeholder="https://exemplo.com/logo.png ou selecione imagem" oninput="previewLogo()">
+                        </div>
+                        <div class="form-group" style="max-width: 140px;">
+                            <label>Prévia da Logo</label>
+                            <div id="cfg-logo-preview" style="width: 60px; height: 60px; border-radius: var(--radius-sm); border: 1px dashed var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--bg);">
+                                <span style="font-size: 1.5rem;">🐾</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i data-lucide="check"></i> Salvar Dados da Empresa
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- SEÇÃO 2: TABELA DE PREÇOS POR PORTE -->
+            <div class="card mb-3">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.5rem;">
+                    <div>
+                        <div class="settings-section-title">
+                            <i data-lucide="tags" style="color: var(--accent);"></i>
+                            <span>Tabela de Preços dos Serviços</span>
+                        </div>
+                        <div class="settings-section-desc" style="margin-bottom: 0;">
+                            Configure a base de preços padrão cobrada para cada porte de animal (P, M, G e GG).
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="openAddServiceModal()">
+                        <i data-lucide="plus"></i> Adicionar Novo Serviço
+                    </button>
+                </div>
+
+                <div class="table-container" style="box-shadow: none; border: 1px solid var(--border-light); margin-top: 1rem;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Serviço</th>
+                                <th style="width: 130px; text-align: right;">Porte P (R$)</th>
+                                <th style="width: 130px; text-align: right;">Porte M (R$)</th>
+                                <th style="width: 130px; text-align: right;">Porte G (R$)</th>
+                                <th style="width: 130px; text-align: right;">Porte GG (R$)</th>
+                                <th style="width: 80px; text-align: center;">Excluir</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cfg-precos-tbody">
+                            <!-- Preenchido dinamicamente via JS com inputs editáveis -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+                    <button class="btn btn-primary btn-sm" onclick="savePriceTable()">
+                        <i data-lucide="check"></i> Salvar Tabela de Preços
+                    </button>
+                </div>
+            </div>
+
+            <!-- SEÇÃO 3: HORÁRIO DE FUNCIONAMENTO -->
+            <div class="card mb-3">
+                <div class="settings-section-title">
+                    <i data-lucide="clock" style="color: var(--success);"></i>
+                    <span>Horário de Funcionamento</span>
+                </div>
+                <div class="settings-section-desc">
+                    Defina os dias e turnos em que o pet shop está aberto para atendimentos e agendamentos.
+                </div>
+
+                <div id="cfg-horarios-container" style="background: var(--bg-card); border-radius: var(--radius-sm);">
+                    <!-- Linhas dos 7 dias preenchidas dinamicamente -->
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+                    <button class="btn btn-primary btn-sm" onclick="saveOperatingHours()">
+                        <i data-lucide="check"></i> Salvar Horários
+                    </button>
+                </div>
+            </div>
+
+            <!-- SEÇÃO 4: CATEGORIAS (PRODUTOS E DESPESAS) -->
+            <div class="grid-2">
+                <!-- Categorias de Produtos -->
+                <div class="card">
+                    <div class="settings-section-title">
+                        <i data-lucide="package" style="color: var(--primary);"></i>
+                        <span>Categorias de Produtos</span>
+                    </div>
+                    <div class="settings-section-desc">
+                        Utilizadas para classificar itens no Estoque e no PDV.
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <input type="text" id="novo-cat-produto-input" placeholder="Nova categoria..." style="flex: 1;" onkeypress="handleCatKey(event, 'produto')">
+                        <button class="btn btn-primary btn-sm" onclick="addCategory('produto')">
+                            <i data-lucide="plus"></i> Adicionar
+                        </button>
+                    </div>
+
+                    <div class="tag-list" id="lista-categorias-produtos">
+                        <!-- Chips preenchidos dinamicamente -->
+                    </div>
+                </div>
+
+                <!-- Categorias de Despesas -->
+                <div class="card">
+                    <div class="settings-section-title">
+                        <i data-lucide="receipt" style="color: var(--danger);"></i>
+                        <span>Categorias de Despesas</span>
+                    </div>
+                    <div class="settings-section-desc">
+                        Utilizadas para categorizar custos e despesas no Financeiro.
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <input type="text" id="novo-cat-despesa-input" placeholder="Nova categoria..." style="flex: 1;" onkeypress="handleCatKey(event, 'despesa')">
+                        <button class="btn btn-primary btn-sm" onclick="addCategory('despesa')">
+                            <i data-lucide="plus"></i> Adicionar
+                        </button>
+                    </div>
+
+                    <div class="tag-list" id="lista-categorias-despesas">
+                        <!-- Chips preenchidos dinamicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO 5: BACKUP E RESTAURAÇÃO DE DADOS -->
+            <div class="card mb-3">
+                <div class="settings-section-title">
+                    <i data-lucide="database" style="color: var(--text-primary);"></i>
+                    <span>Backup e Restauração de Dados</span>
+                </div>
+                <div class="settings-section-desc">
+                    Exporte uma cópia completa de todos os dados cadastrados (clientes, pets, produtos, agendamentos, vendas e financeiro) ou restaure a partir de um arquivo salvo.
+                </div>
+
+                <div class="grid-2" style="margin-bottom: 0;">
+                    <div style="border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1.25rem; background: var(--bg);">
+                        <h4 style="font-size: 0.95rem; color: var(--text-primary); margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="download" style="color: var(--primary);"></i> Exportar Backup Completo
+                        </h4>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                            Gera um arquivo JSON contendo todo o banco de dados do PetShop Manager.
+                        </p>
+                        <button class="btn btn-primary btn-sm" onclick="exportFullBackup()">
+                            <i data-lucide="download"></i> Baixar Arquivo JSON
+                        </button>
+                    </div>
+
+                    <div style="border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1.25rem; background: var(--bg);">
+                        <h4 style="font-size: 0.95rem; color: var(--text-primary); margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="upload" style="color: var(--success);"></i> Importar Backup JSON
+                        </h4>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                            Substitui a base atual pelos dados contidos no arquivo JSON selecionado.
+                        </p>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="file" id="cfg-backup-file-input" accept=".json,.psbackup" style="font-size: 0.85rem; flex: 1;">
+                            <button class="btn btn-success btn-sm" onclick="importBackupFile()">
+                                <i data-lucide="check-circle"></i> Restaurar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO 6: SEGURANÇA, TRILHA DE AUDITORIA & CONFORMIDADE LGPD -->
+            <div class="card mb-3">
+                <div class="settings-section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="shield-check" style="color: var(--primary);"></i>
+                        <span>Segurança, Trilha de Auditoria & Conformidade LGPD</span>
+                    </div>
+                    <span class="badge badge-success" style="font-size: 0.75rem;">Proteção Ativa</span>
+                </div>
+                <div class="settings-section-desc">
+                    Monitoramento de eventos sensíveis, controle de armazenamento local e governança de dados pessoais conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018).
+                </div>
+
+                <!-- Painel de Governança e DPO -->
+                <div class="grid-2" style="margin-bottom: 1.5rem;">
+                    <div style="border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; background: var(--bg);">
+                        <h4 style="font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem;">
+                            <i data-lucide="user-check" style="color: var(--primary); width:16px; height:16px;"></i> Canal do Encarregado de Dados (DPO)
+                        </h4>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                            Canal institucional para atendimento de requisições de titulares (Art. 18 LGPD: confirmação, exclusão e portabilidade).
+                        </p>
+                        <div style="font-size: 0.82rem; font-weight: 500; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="mail" style="width: 14px; height: 14px; color: var(--text-light);"></i>
+                            <span>privacidade@petshopmanager.com.br</span>
+                        </div>
+                    </div>
+
+                    <div style="border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; background: var(--bg);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <h4 style="font-size: 0.9rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
+                                <i data-lucide="hard-drive" style="color: var(--primary); width:16px; height:16px;"></i> Quota de Armazenamento Seguro
+                            </h4>
+                            <span id="storage-usage-text" style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary);">Calculando...</span>
+                        </div>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            Uso da cota do navegador protegida contra perdas acidentais via <code>StorageManager</code>.
+                        </p>
+                        <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                            <div id="storage-progress-bar" style="width: 5%; height: 100%; background: var(--primary); transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabela de Trilha de Auditoria -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <h4 style="font-size: 0.95rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
+                            <i data-lucide="history" style="color: var(--primary); width:16px; height:16px;"></i> Registro de Atividades Recentes (Audit Trail)
+                        </h4>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-secondary btn-sm" onclick="exportarLogsCsv()">
+                                <i data-lucide="file-spreadsheet"></i> Exportar CSV
+                            </button>
+                            <button class="btn btn-secondary btn-sm text-danger" onclick="limparLogsAuditoria()" style="border-color:#fecdd3;">
+                                <i data-lucide="trash-2"></i> Limpar Logs
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto; max-height: 280px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                        <table class="data-table" style="font-size: 0.82rem;">
+                            <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 1;">
+                                <tr>
+                                    <th>Data / Hora</th>
+                                    <th>Ação</th>
+                                    <th>Categoria</th>
+                                    <th>Perfil (RBAC)</th>
+                                    <th>Detalhes do Evento</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-logs-auditoria">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: var(--text-light); padding: 1.5rem;">
+                                        Nenhum evento registrado ainda.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: ADICIONAR NOVO SERVIÇO NA TABELA -->
+    <!-- ============================================== -->
+    <div class="modal-overlay" id="modal-novo-servico">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>Novo Serviço na Tabela</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-novo-servico')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-novo-servico" onsubmit="confirmAddService(event)">
+                    <div class="form-group">
+                        <label for="servico-nome">Nome do Serviço <span class="text-danger">*</span></label>
+                        <input type="text" id="servico-nome" required placeholder="Ex: Hidratação, Corte de Unha">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="servico-p">Porte P (R$)</label>
+                            <input type="number" id="servico-p" step="0.5" min="0" required placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="servico-m">Porte M (R$)</label>
+                            <input type="number" id="servico-m" step="0.5" min="0" required placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="servico-g">Porte G (R$)</label>
+                            <input type="number" id="servico-g" step="0.5" min="0" required placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="servico-gg">Porte GG (R$)</label>
+                            <input type="number" id="servico-gg" step="0.5" min="0" required placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div class="modal-footer" style="padding: 1rem 0 0; margin-top: 1rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-novo-servico')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Adicionar Serviço</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+    
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="js/app.js"></script>
+    <script src="js/configuracoes.js"></script>
+</body>
+</html>
