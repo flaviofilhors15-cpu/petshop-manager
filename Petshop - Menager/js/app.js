@@ -1103,9 +1103,11 @@ function initSidebar() {
         </div>
         <nav class="sidebar-nav">${navHtml}</nav>
         <div class="sidebar-footer" style="display:flex; flex-direction:column; gap:0.45rem; padding: 1rem 1.25rem;">
+            ${(localStorage.getItem('ps_is_platform_owner') === 'true' || localStorage.getItem('ps_saas_is_owner') === 'true') ? `
             <button class="btn btn-primary btn-sm" style="width:100%; justify-content:center; background:linear-gradient(135deg, #f59e0b, #d97706); border:none; font-weight:700; font-size:0.8rem; box-shadow:0 2px 8px rgba(245,158,11,0.3);" onclick="window.location.href='admin.html'" title="Acessar Central do Dono do SaaS">
                 <i data-lucide="crown" style="width:14px;height:14px;"></i> Painel Super Admin
             </button>
+            ` : ''}
             <button class="btn btn-secondary btn-sm" style="width:100%; justify-content:center; color:#f87171; border-color:rgba(255,255,255,0.15); background:rgba(255,255,255,0.05);" onclick="fazerLogout()" title="Sair do Pet Shop atual">
                 <i data-lucide="log-out" style="width:14px;height:14px;"></i> Sair / Trocar Loja
             </button>

@@ -64,6 +64,7 @@
             const pin = prompt('🔒 ACESSO RESTRITO AO DONO DA PLATAFORMA (SUPER ADMIN)\n\nInforme sua senha de criador para autenticar o console:');
             if (pin === 'Ma15072019$') {
                 localStorage.setItem(SAAS_STORAGE.IS_OWNER, 'true');
+                localStorage.setItem('ps_is_platform_owner', 'true');
                 if (typeof showToast === 'function') {
                     showToast('Autenticação de Criador validada com sucesso!', 'success');
                 }
