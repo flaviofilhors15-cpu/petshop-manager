@@ -237,7 +237,7 @@ window.validarAutorizacaoPagina = validarAutorizacaoPagina;
 // === Gerenciamento de Sessão de Pet Shops ===
 function verificarSessao() {
     const page = getCurrentPage();
-    if (page === 'login') return true;
+    if (page === 'login' || page === 'admin') return true;
 
     const activeTenantId = localStorage.getItem('ps_current_tenant_id');
     if (!activeTenantId) {
@@ -1641,7 +1641,7 @@ window.encerrarImpersonacaoGlobal = function() {
 // Verificação de Licença, Trial e Bloqueio Automático por Inadimplência (Dunning)
 function verificarStatusAssinaturaTenant() {
     const page = getCurrentPage();
-    if (page === 'login') return true;
+    if (page === 'login' || page === 'admin') return true;
 
     // Se estiver em modo de suporte pelo dono, permite navegar para diagnosticar
     if (localStorage.getItem('ps_impersonating_tenant')) return true;
