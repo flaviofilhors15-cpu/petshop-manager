@@ -3,7 +3,7 @@
 // Estratégia Network-First Segura (Evita ERR_FAILED)
 // ==========================================
 
-const CACHE_NAME = 'petshop-manager-v2.9';
+const CACHE_NAME = 'petshop-manager-v2.10';
 
 const ASSETS_TO_CACHE = [
   './',
