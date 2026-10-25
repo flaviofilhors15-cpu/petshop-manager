@@ -1160,6 +1160,19 @@ function initHeader() {
                 <i data-lucide="store" style="width:14px;height:14px;"></i>
                 <span>${escapeHtml(nomeFantasia)}</span>
             </div>
+
+            <!-- Botão Alternador Modo Demonstração / Loja Real Zerada -->
+            ${(localStorage.getItem('ps_data_state') === 'clean') ? `
+            <button class="btn btn-sm" onclick="carregarDemonstracaoPositiva()" style="display:inline-flex; align-items:center; gap:5px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; padding:4px 12px; font-weight:700; font-size:0.75rem; box-shadow:0 2px 8px rgba(16,185,129,0.3); cursor:pointer;" title="Clique para ver uma demonstração completa de uma empresa positiva e com alto lucro">
+                <i data-lucide="sparkles" style="width:13px; height:13px;"></i>
+                <span>Ver Demonstração</span>
+            </button>
+            ` : `
+            <button class="btn btn-sm" onclick="zerarPainelLojaReal()" style="display:inline-flex; align-items:center; gap:5px; background:#fff1f2; color:#be123c; border:1px solid #fecdd3; border-radius:20px; padding:4px 10px; font-weight:700; font-size:0.75rem; cursor:pointer;" title="Zerar todos os números para começar sua loja real do zero">
+                <i data-lucide="rotate-ccw" style="width:13px; height:13px;"></i>
+                <span>Zerar Painel</span>
+            </button>
+            `}
             ${localStorage.getItem('ps_is_platform_owner') === 'true' ? `
             <button class="btn btn-sm" style="display:inline-flex; align-items:center; gap:5px; background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; border:none; border-radius:20px; padding:4px 10px; font-weight:700; font-size:0.75rem; box-shadow:0 2px 8px rgba(245,158,11,0.3); cursor:pointer;" onclick="window.location.href='admin.html'" title="Retornar à Central do Dono da Plataforma (Super Admin)">
                 <i data-lucide="crown" style="width:13px; height:13px;"></i>
@@ -1404,6 +1417,9 @@ function initMobileMenu() {
 
 // === Dados de Demonstração ===
 function initDemoData() {
+    // Se o usuário optou por manter o painel zerado para a loja real, não carregar demo
+    if (localStorage.getItem('ps_data_state') === 'clean') return;
+
     // Verificar se já existe dados
     if (DB.get(STORAGE_KEYS.CLIENTS).length > 0) return;
 
@@ -1601,6 +1617,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. Suporte ao aplicativo PWA e Service Worker
     initPwaSupport();
 
+    // 5.1 Garantir painel zerado por padrão para operação de loja real
+    if (!localStorage.getItem('ps_painel_zerado_v1')) {
+        localStorage.setItem('ps_painel_zerado_v1', 'true');
+        localStorage.setItem('ps_data_state', 'clean');
+        DB.save(STORAGE_KEYS.REVENUES, []);
+        DB.save(STORAGE_KEYS.EXPENSES, []);
+        DB.save(STORAGE_KEYS.SALES, []);
+        DB.save(STORAGE_KEYS.APPOINTMENTS, []);
+        DB.save(STORAGE_KEYS.CLIENTS, []);
+        DB.save(STORAGE_KEYS.PETS, []);
+        const s = DB.get(STORAGE_KEYS.SETTINGS) || {};
+        s.caixa = { gaveta: 0, pixBanco: 0, cartoesCompensar: 0, reserva: 0 };
+        DB.save(STORAGE_KEYS.SETTINGS, s);
+    }
+
     // 6. Carregar dados demo (apenas se vazio)
     initDemoData();
     
@@ -1611,6 +1642,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 8. Exibir Avisos e Comunicados Globais publicados pelo Super Admin
     exibirAvisosGlobaisPlataforma();
+    
+    // 8.1 Exibir Banner de Modo (Demonstração vs Loja Real)
+    exibirBannerModoPainel();
     
     // 9. Renderizar ícones Lucide
     if (typeof lucide !== 'undefined') {
@@ -2030,3 +2064,343 @@ function abrirModalFechamentoCaixa() {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 window.abrirModalFechamentoCaixa = abrirModalFechamentoCaixa;
+
+// ==========================================
+// MÓDULO: ALTERNADOR PAINEL ZERADO vs DEMONSTRAÇÃO LUCRATIVA
+// ==========================================
+
+function exibirBannerModoPainel() {
+    const containerDash = document.getElementById('container-banner-modo');
+    const containerFin = document.getElementById('container-banner-modo-financeiro');
+    const target = containerDash || containerFin;
+    if (!target) return;
+
+    const isClean = localStorage.getItem('ps_data_state') === 'clean';
+
+    if (isClean) {
+        target.innerHTML = `
+            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid #0284c7; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="width: 42px; height: 42px; border-radius: 10px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                        🏪
+                    </div>
+                    <div>
+                        <strong style="color: #1e293b; font-size: 0.95rem;">Painel Zerado &amp; Pronto para sua Loja Real</strong>
+                        <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">
+                            Todos os indicadores começam em R$ 0,00. Conforme você lançar seus clientes, agendamentos e vendas, o painel será preenchido em tempo real.
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <button class="btn btn-primary btn-sm" onclick="carregarDemonstracaoPositiva()" style="background: linear-gradient(135deg, #10b981, #059669); border: none; font-weight: 700; box-shadow: 0 2px 8px rgba(16,185,129,0.3); display: inline-flex; align-items: center; gap: 5px;">
+                        <i data-lucide="sparkles"></i> Ver Demonstração de Sucesso (Lucro Alto)
+                    </button>
+                </div>
+            </div>
+        `;
+    } else {
+        target.innerHTML = `
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 4px solid #16a34a; border-radius: 12px; padding: 0.85rem 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="font-size: 1.35rem;">🌟</span>
+                    <div>
+                        <strong style="color: #15803d; font-size: 0.95rem;">Modo Demonstração: Empresa Modelo com Faturamento Positivo Ativo</strong>
+                        <div style="font-size: 0.8rem; color: #166534; margin-top: 2px;">
+                            Visualizando uma empresa saudável: <strong>R$ 28.450</strong> em faturamento, <strong>+ R$ 12.250</strong> de lucro líquido (+43,1% de margem) e gráficos em alta.
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-secondary btn-sm" onclick="zerarPainelLojaReal()" style="background: #ffffff; color: #be123c; border-color: #fecdd3; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
+                        <i data-lucide="rotate-ccw"></i> Zerar Painel (Começar Loja Real)
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+window.exibirBannerModoPainel = exibirBannerModoPainel;
+
+async function zerarPainelLojaReal(confirmar = true) {
+    if (confirmar) {
+        const proceed = await confirmDialog(
+            'Deseja realmente zerar todos os números do painel para começar sua loja real do zero?\n\n' +
+            'Todos os faturamentos, despesas, agendamentos e clientes serão resetados para R$ 0,00.\n' +
+            '(Você poderá clicar em "Ver Demonstração" a qualquer momento para ver o modelo de exemplo novamente).'
+        );
+        if (!proceed) return;
+    }
+
+    localStorage.setItem('ps_data_state', 'clean');
+
+    // Zerar movimentações financeiras e operacionais
+    DB.save(STORAGE_KEYS.REVENUES, []);
+    DB.save(STORAGE_KEYS.EXPENSES, []);
+    DB.save(STORAGE_KEYS.SALES, []);
+    DB.save(STORAGE_KEYS.APPOINTMENTS, []);
+    DB.save(STORAGE_KEYS.CLIENTS, []);
+    DB.save(STORAGE_KEYS.PETS, []);
+    DB.save(STORAGE_KEYS.PACKAGES, []);
+    DB.save(STORAGE_KEYS.STOCK_MOVEMENTS, []);
+    DB.save(STORAGE_KEYS.PURCHASE_ORDERS, []);
+
+    // Zerar saldos do caixa
+    const settings = DB.get(STORAGE_KEYS.SETTINGS) || {};
+    settings.caixa = {
+        gaveta: 0,
+        pixBanco: 0,
+        cartoesCompensar: 0,
+        reserva: 0
+    };
+    DB.save(STORAGE_KEYS.SETTINGS, settings);
+
+    logAudit('RESET_CLEAN', 'Administração', 'Painel zerado para operação de loja real.');
+    showToast('Painel zerado com sucesso! Todos os números agora estão em R$ 0,00.', 'success');
+
+    setTimeout(() => {
+        window.location.reload();
+    }, 400);
+}
+window.zerarPainelLojaReal = zerarPainelLojaReal;
+
+async function carregarDemonstracaoPositiva() {
+    showToast('Carregando dados de demonstração de uma empresa lucrativa...', 'info');
+
+    localStorage.setItem('ps_data_state', 'demo');
+
+    const today = new Date();
+    const curYear = today.getFullYear();
+    const curMonth = today.getMonth();
+
+    const dIso = (ano, mes, dia) => {
+        const m = String(mes + 1).padStart(2, '0');
+        const d = String(dia).padStart(2, '0');
+        return `${ano}-${m}-${d}`;
+    };
+
+    const daysAgo = (n) => {
+        const d = new Date(today);
+        d.setDate(today.getDate() - n);
+        return d.toISOString().split('T')[0];
+    };
+    const daysLater = (n) => {
+        const d = new Date(today);
+        d.setDate(today.getDate() + n);
+        return d.toISOString().split('T')[0];
+    };
+
+    // 1. Configurações & Caixa
+    const settings = DB.get(STORAGE_KEYS.SETTINGS) || {};
+    settings.nomeFantasia = settings.nomeFantasia || 'PetShop Modelo & Spa Animal';
+    settings.caixa = {
+        gaveta: 2450.00,
+        pixBanco: 21000.00,
+        cartoesCompensar: 5000.00,
+        reserva: 10000.00
+    };
+    settings.servicoPrecos = {
+        'Banho': { P: 45, M: 55, G: 70, GG: 85 },
+        'Tosa': { P: 50, M: 65, G: 80, GG: 95 },
+        'Banho+Tosa': { P: 85, M: 105, G: 130, GG: 155 },
+        'Tosa Higiênica': { P: 30, M: 35, G: 45, GG: 55 }
+    };
+    DB.save(STORAGE_KEYS.SETTINGS, settings);
+
+    // 2. Clientes e Pets de Demonstração
+    const clients = [
+        { id: 'cli_001', nome: 'Mariana Duarte', telefone: '(11) 99123-4567', email: 'mariana.duarte@email.com', endereco: 'Rua das Palmeiras, 142', cpf: '123.456.789-01', observacoes: 'Cliente VIP - Banho semanal', dataCadastro: daysAgo(90) },
+        { id: 'cli_002', nome: 'Ricardo Albuquerque', telefone: '(11) 98234-5678', email: 'ricardo@email.com', endereco: 'Av. Paulista, 1500', cpf: '234.567.890-12', observacoes: 'Tem 2 cães grandes', dataCadastro: daysAgo(75) },
+        { id: 'cli_003', nome: 'Camila Peixoto', telefone: '(11) 97345-6789', email: 'camila.p@email.com', endereco: 'Rua Bela Cintra, 89', cpf: '', observacoes: '', dataCadastro: daysAgo(60) },
+        { id: 'cli_004', nome: 'Felipe Santana', telefone: '(11) 96456-7890', email: 'felipe.s@email.com', endereco: 'Rua Oscar Freire, 320', cpf: '', observacoes: 'Compra ração premium a cada 20 dias', dataCadastro: daysAgo(45) },
+        { id: 'cli_005', nome: 'Beatriz Lima', telefone: '(11) 95567-8901', email: 'beatriz@email.com', endereco: 'Alameda Santos, 450', cpf: '', observacoes: '', dataCadastro: daysAgo(30) }
+    ];
+    DB.save(STORAGE_KEYS.CLIENTS, clients);
+
+    const pets = [
+        { id: 'pet_001', clienteId: 'cli_001', nome: 'Thor', especie: 'Cão', raca: 'Golden Retriever', porte: 'G', dataNascimento: '2022-04-10', peso: 34, alergias: 'Nenhuma', observacoes: 'Muito dócil, adora secador', foto: '' },
+        { id: 'pet_002', clienteId: 'cli_001', nome: 'Mimi', especie: 'Gato', raca: 'Persa', porte: 'P', dataNascimento: '2023-01-15', peso: 4.2, alergias: 'Pele sensível', observacoes: 'Usar shampoo hipoalergênico', foto: '' },
+        { id: 'pet_003', clienteId: 'cli_002', nome: 'Bob', especie: 'Cão', raca: 'Labrador', porte: 'G', dataNascimento: '2021-08-20', peso: 36, alergias: 'Nenhuma', observacoes: '', foto: '' },
+        { id: 'pet_004', clienteId: 'cli_002', nome: 'Luna', especie: 'Cão', raca: 'Border Collie', porte: 'M', dataNascimento: '2022-11-05', peso: 19, alergias: 'Nenhuma', observacoes: '', foto: '' },
+        { id: 'pet_005', clienteId: 'cli_003', nome: 'Mel', especie: 'Cão', raca: 'Shih Tzu', porte: 'P', dataNascimento: '2023-05-12', peso: 5.8, alergias: 'Nenhuma', observacoes: 'Tosa bebê na tesoura', foto: '' },
+        { id: 'pet_006', clienteId: 'cli_004', nome: 'Zeus', especie: 'Cão', raca: 'Pastor Alemão', porte: 'G', dataNascimento: '2020-09-18', peso: 38, alergias: 'Nenhuma', observacoes: '', foto: '' },
+        { id: 'pet_007', clienteId: 'cli_005', nome: 'Chico', especie: 'Cão', raca: 'Spitz Alemão', porte: 'P', dataNascimento: '2023-03-25', peso: 3.5, alergias: 'Nenhuma', observacoes: 'Cuidado ao desembaraçar', foto: '' }
+    ];
+    DB.save(STORAGE_KEYS.PETS, pets);
+
+    // 3. Equipe
+    const employees = [
+        { id: 'func_001', nome: 'João Santos', cargo: 'Tosador Sênior', telefone: '(11) 98888-1111', email: 'joao@petshop.com', comissaoTipo: 'percentual', comissaoValor: 15 },
+        { id: 'func_002', nome: 'Ana Oliveira', cargo: 'Banhista Especialista', telefone: '(11) 98888-2222', email: 'ana@petshop.com', comissaoTipo: 'percentual', comissaoValor: 12 },
+        { id: 'func_003', nome: 'Juliana Mendes', cargo: 'Gerente / Atendimento', telefone: '(11) 98888-3333', email: 'juliana@petshop.com', comissaoTipo: 'percentual', comissaoValor: 0 }
+    ];
+    DB.save(STORAGE_KEYS.EMPLOYEES, employees);
+
+    // 4. Receitas Positivas (Faturamento do Mês = R$ 28.450,00)
+    const revenues = [];
+
+    const servicosDemo = [
+        { desc: 'Banho + Tosa Bebê - Mel (Shih Tzu)', valor: 105.00, cat: 'Serviços', forma: 'Pix' },
+        { desc: 'Banho & Hidratação - Thor (Golden)', valor: 130.00, cat: 'Serviços', forma: 'Cartão de Crédito' },
+        { desc: 'Tosa Higiênica + Banho - Mimi (Persa)', valor: 85.00, cat: 'Serviços', forma: 'Pix' },
+        { desc: 'Banho Completo - Bob (Labrador)', valor: 85.00, cat: 'Serviços', forma: 'Cartão de Débito' },
+        { desc: 'Banho & Tosa - Luna (Border Collie)', valor: 115.00, cat: 'Serviços', forma: 'Pix' },
+        { desc: 'Banho & Desembolo - Chico (Spitz)', valor: 95.00, cat: 'Serviços', forma: 'Cartão de Crédito' },
+        { desc: 'Banho Porte G - Zeus (Pastor)', valor: 95.00, cat: 'Serviços', forma: 'Dinheiro' }
+    ];
+
+    const vendasDemo = [
+        { desc: 'Venda PDV: 2x Ração Golden Adulto 15kg', valor: 379.80, cat: 'Vendas de Produtos', forma: 'Cartão de Crédito' },
+        { desc: 'Venda PDV: 3x Antipulgas Simparic + Petiscos', valor: 289.50, cat: 'Vendas de Produtos', forma: 'Pix' },
+        { desc: 'Venda PDV: Areia Higiênica 4kg + Arranhador', valor: 94.80, cat: 'Vendas de Produtos', forma: 'Pix' },
+        { desc: 'Venda PDV: Ração Royal Canin Gatos 3kg', valor: 189.90, cat: 'Vendas de Produtos', forma: 'Cartão de Crédito' },
+        { desc: 'Venda PDV: Caminha Luxo G + Brinquedos', valor: 169.70, cat: 'Vendas de Produtos', forma: 'Cartão de Crédito' },
+        { desc: 'Venda PDV: 5x Sachês Úmidos + Bifinho', valor: 59.50, cat: 'Vendas de Produtos', forma: 'Dinheiro' }
+    ];
+
+    let acumuladoMes = 0;
+    const alvoMes = 28450.00;
+    const maxDia = Math.min(today.getDate(), 25);
+
+    for (let dia = 1; dia <= maxDia; dia++) {
+        const itemS = servicosDemo[(dia * 3) % servicosDemo.length];
+        const dt = dIso(curYear, curMonth, dia);
+        revenues.push({
+            id: 'rec_cur_' + dia + '_1',
+            descricao: itemS.desc,
+            categoria: itemS.cat,
+            valor: itemS.valor,
+            data: dt,
+            formaPagamento: itemS.forma,
+            status: 'recebido'
+        });
+        acumuladoMes += itemS.valor;
+
+        if (dia % 2 === 0) {
+            const itemV = vendasDemo[(dia * 2) % vendasDemo.length];
+            revenues.push({
+                id: 'rec_cur_' + dia + '_2',
+                descricao: itemV.desc,
+                categoria: itemV.cat,
+                valor: itemV.valor,
+                data: dt,
+                formaPagamento: itemV.forma,
+                status: 'recebido'
+            });
+            acumuladoMes += itemV.valor;
+        }
+    }
+
+    const restante = alvoMes - acumuladoMes;
+    if (restante > 0) {
+        revenues.push({
+            id: 'rec_cur_lote_pacotes',
+            descricao: 'Pacotes Mensais de Banho & Tosa (18 pacotes fechados)',
+            categoria: 'Planos & Pacotes',
+            valor: Math.round(restante * 0.65 * 100) / 100,
+            data: dIso(curYear, curMonth, Math.max(1, Math.min(10, maxDia))),
+            formaPagamento: 'Cartão de Crédito',
+            status: 'recebido'
+        });
+        revenues.push({
+            id: 'rec_cur_lote_balcao',
+            descricao: 'Vendas Balcão & Rações (Movimento Consolidado)',
+            categoria: 'Vendas de Produtos',
+            valor: Math.round((restante - (Math.round(restante * 0.65 * 100) / 100)) * 100) / 100,
+            data: dIso(curYear, curMonth, Math.max(1, Math.min(18, maxDia))),
+            formaPagamento: 'Pix',
+            status: 'recebido'
+        });
+    }
+
+    // Histórico de 5 Meses Anteriores
+    const historicoMeses = [
+        { mesOffset: 5, valor: 19800.00 },
+        { mesOffset: 4, valor: 22300.00 },
+        { mesOffset: 3, valor: 24100.00 },
+        { mesOffset: 2, valor: 25900.00 },
+        { mesOffset: 1, valor: 27200.00 }
+    ];
+
+    historicoMeses.forEach(hm => {
+        const d = new Date(today);
+        d.setMonth(today.getMonth() - hm.mesOffset);
+        const y = d.getFullYear();
+        const m = d.getMonth();
+
+        revenues.push({
+            id: 'rec_hist_' + hm.mesOffset + '_serv',
+            descricao: 'Faturamento de Serviços Banho e Tosa (Mensal)',
+            categoria: 'Serviços',
+            valor: Math.round(hm.valor * 0.58 * 100) / 100,
+            data: dIso(y, m, 15),
+            formaPagamento: 'Pix',
+            status: 'recebido'
+        });
+        revenues.push({
+            id: 'rec_hist_' + hm.mesOffset + '_prod',
+            descricao: 'Vendas de Produtos e Rações (Mensal)',
+            categoria: 'Vendas de Produtos',
+            valor: Math.round((hm.valor - (Math.round(hm.valor * 0.58 * 100) / 100)) * 100) / 100,
+            data: dIso(y, m, 20),
+            formaPagamento: 'Cartão de Crédito',
+            status: 'recebido'
+        });
+    });
+
+    DB.save(STORAGE_KEYS.REVENUES, revenues);
+
+    // 5. Despesas do Mês = R$ 16.200,00 (Lucro Líquido = + R$ 12.250,00 | Margem = 43,1%)
+    const expenses = [
+        { id: 'desp_001', descricao: 'Aluguel do Ponto Comercial & IPTU', categoria: 'Aluguel', valor: 3500.00, data: dIso(curYear, curMonth, 5), status: 'pago', formaPagamento: 'Pix' },
+        { id: 'desp_002', descricao: 'Folha de Salários da Equipe (3 colaboradores)', categoria: 'Salários', valor: 7200.00, data: dIso(curYear, curMonth, 5), status: 'pago', formaPagamento: 'Pix' },
+        { id: 'desp_003', descricao: 'Comissões de Serviços (Tosador e Banhista)', categoria: 'Salários', valor: 1850.00, data: dIso(curYear, curMonth, 10), status: 'pago', formaPagamento: 'Pix' },
+        { id: 'desp_004', descricao: 'Energia Elétrica Comercial & Água', categoria: 'Água/Luz', valor: 850.00, data: dIso(curYear, curMonth, 15), status: 'pago', formaPagamento: 'Boleto' },
+        { id: 'desp_005', descricao: 'Distribuidora PetFood (Reposição Rações)', categoria: 'Fornecedores', valor: 1600.00, data: dIso(curYear, curMonth, 18), status: 'pago', formaPagamento: 'Boleto' },
+        { id: 'desp_006', descricao: 'Distribuidora VetFarma (Medicamentos e Higiene)', categoria: 'Fornecedores', valor: 800.00, data: dIso(curYear, curMonth, 20), status: 'pago', formaPagamento: 'Boleto' },
+        { id: 'desp_007', descricao: 'Sistema Gestão PetShop + Internet Fibra', categoria: 'Outros', valor: 400.00, data: dIso(curYear, curMonth, 22), status: 'pago', formaPagamento: 'Cartão de Crédito' }
+    ];
+
+    historicoMeses.forEach(hm => {
+        const d = new Date(today);
+        d.setMonth(today.getMonth() - hm.mesOffset);
+        const y = d.getFullYear();
+        const m = d.getMonth();
+        const custoMes = Math.round(hm.valor * 0.58);
+
+        expenses.push({
+            id: 'desp_hist_' + hm.mesOffset,
+            descricao: 'Custos Operacionais e Folha Consolidada',
+            categoria: 'Salários',
+            valor: custoMes,
+            data: dIso(y, m, 10),
+            status: 'pago',
+            formaPagamento: 'Pix'
+        });
+    });
+
+    DB.save(STORAGE_KEYS.EXPENSES, expenses);
+
+    // 6. Agendamentos de Hoje (8 agendamentos com movimento bonito)
+    const todayStr = today.toISOString().split('T')[0];
+    const appointments = [
+        { id: 'agd_001', clienteId: 'cli_001', petId: 'pet_001', servico: 'Banho+Tosa', data: todayStr, horario: '08:30', funcionarioId: 'func_001', observacoes: '', valor: 130, status: 'concluido' },
+        { id: 'agd_002', clienteId: 'cli_003', petId: 'pet_005', servico: 'Banho+Tosa', data: todayStr, horario: '09:30', funcionarioId: 'func_001', observacoes: 'Tosa bebê', valor: 105, status: 'concluido' },
+        { id: 'agd_003', clienteId: 'cli_002', petId: 'pet_003', servico: 'Banho', data: todayStr, horario: '10:30', funcionarioId: 'func_002', observacoes: '', valor: 85, status: 'concluido' },
+        { id: 'agd_004', clienteId: 'cli_001', petId: 'pet_002', servico: 'Tosa Higiênica', data: todayStr, horario: '11:30', funcionarioId: 'func_001', observacoes: 'Pele sensível', valor: 45, status: 'concluido' },
+        { id: 'agd_005', clienteId: 'cli_002', petId: 'pet_004', servico: 'Banho', data: todayStr, horario: '13:30', funcionarioId: 'func_002', observacoes: '', valor: 70, status: 'concluido' },
+        { id: 'agd_006', clienteId: 'cli_005', petId: 'pet_007', servico: 'Banho', data: todayStr, horario: '14:30', funcionarioId: 'func_002', observacoes: 'Desembolo', valor: 95, status: 'concluido' },
+        { id: 'agd_007', clienteId: 'cli_004', petId: 'pet_006', servico: 'Banho', data: todayStr, horario: '15:30', funcionarioId: 'func_002', observacoes: 'Porte G', valor: 95, status: 'agendado' },
+        { id: 'agd_008', clienteId: 'cli_003', petId: 'pet_005', servico: 'Tosa', data: todayStr, horario: '16:30', funcionarioId: 'func_001', observacoes: '', valor: 65, status: 'agendado' }
+    ];
+    DB.save(STORAGE_KEYS.APPOINTMENTS, appointments);
+
+    showToast('✨ Demonstração lucrativa carregada! Faturamento: R$ 28.450 | Lucro: + R$ 12.250 (+43,1%).', 'success');
+
+    setTimeout(() => {
+        window.location.reload();
+    }, 400);
+}
+window.carregarDemonstracaoPositiva = carregarDemonstracaoPositiva;
+
