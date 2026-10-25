@@ -1146,6 +1146,9 @@ function initHeader() {
                 <button class="quick-action-item" onclick="window.location.href='clientes.html'">
                     <i data-lucide="user-plus"></i> Novo Cliente / Pet
                 </button>
+                <button class="quick-action-item" onclick="window.location.href='financeiro.html?acao=nova-receita'">
+                    <i data-lucide="trending-up"></i> Nova Receita
+                </button>
                 <button class="quick-action-item" onclick="window.location.href='financeiro.html'">
                     <i data-lucide="plus-circle"></i> Nova Despesa
                 </button>

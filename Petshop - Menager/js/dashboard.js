@@ -218,8 +218,8 @@ function renderizarGraficoFaturamento() {
 
     const ctx = canvas.getContext('2d');
     const gradiente = ctx.createLinearGradient(0, 0, 0, 240);
-    gradiente.addColorStop(0, 'rgba(91, 164, 230, 0.45)');
-    gradiente.addColorStop(1, 'rgba(91, 164, 230, 0.02)');
+    gradiente.addColorStop(0, 'rgba(14, 165, 233, 0.35)');
+    gradiente.addColorStop(1, 'rgba(14, 165, 233, 0.01)');
 
     chartFaturamentoInstance = new Chart(ctx, {
         type: 'line',
@@ -228,14 +228,14 @@ function renderizarGraficoFaturamento() {
             datasets: [{
                 label: 'Faturamento',
                 data: dados,
-                borderColor: '#5BA4E6',
+                borderColor: '#0284c7',
                 backgroundColor: gradiente,
                 borderWidth: 2.5,
-                pointBackgroundColor: '#1E3A5F',
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: '#0284c7',
+                pointBorderWidth: 2.5,
                 pointRadius: 5,
-                pointHoverRadius: 7,
+                pointHoverRadius: 8,
                 fill: true,
                 tension: 0.35
             }]
@@ -246,10 +246,15 @@ function renderizarGraficoFaturamento() {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#1E3A5F',
-                    titleFont: { family: 'Poppins', size: 12 },
+                    backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                    titleColor: '#f8fafc',
+                    titleFont: { family: 'Inter', size: 12, weight: '600' },
+                    bodyColor: '#cbd5e1',
                     bodyFont: { family: 'Inter', size: 12 },
-                    padding: 10,
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
                     callbacks: {
                         label: function(context) {
                             return ' Faturamento: ' + formatCurrency(context.raw);
@@ -259,17 +264,21 @@ function renderizarGraficoFaturamento() {
             },
             scales: {
                 x: {
-                    grid: { display: false },
+                    grid: { display: false, drawBorder: false },
                     ticks: {
-                        color: '#5a6f85',
+                        color: '#64748b',
                         font: { family: 'Inter', size: 11 }
                     }
                 },
                 y: {
                     beginAtZero: true,
-                    grid: { color: '#f0f4f8' },
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.15)',
+                        borderDash: [4, 4],
+                        drawBorder: false
+                    },
                     ticks: {
-                        color: '#5a6f85',
+                        color: '#64748b',
                         font: { family: 'Inter', size: 11 },
                         callback: function(val) {
                             return 'R$ ' + val.toLocaleString('pt-BR');
@@ -324,40 +333,47 @@ function renderizarGraficoServicos() {
         data = [1];
     }
 
-    const cores = ['#5BA4E6', '#4CAF82', '#F5A623', '#D4A84B', '#9C27B0', '#E74C6F', '#2a4f7a'];
+    const cores = ['#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e', '#06b6d4', '#ec4899'];
     const coresFundo = labels.map((_, i) => cores[i % cores.length]);
 
     const ctx = canvas.getContext('2d');
     chartServicosInstance = new Chart(ctx, {
-        type: 'pie',
+        type: 'doughnut',
         data: {
             labels: labels,
             datasets: [{
                 data: data,
                 backgroundColor: coresFundo,
-                borderColor: '#ffffff',
-                borderWidth: 2
+                borderWidth: 0,
+                borderRadius: 6,
+                spacing: 4
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '72%',
             plugins: {
                 legend: {
                     position: 'bottom',
                     labels: {
-                        font: { family: 'Inter', size: 11 },
-                        color: '#1E3A5F',
-                        padding: 12,
+                        font: { family: 'Inter', size: 11, weight: '500' },
+                        color: '#475569',
+                        padding: 14,
                         usePointStyle: true,
                         pointStyle: 'circle'
                     }
                 },
                 tooltip: {
-                    backgroundColor: '#1E3A5F',
-                    padding: 10,
-                    titleFont: { family: 'Poppins', size: 12 },
+                    backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                    titleColor: '#f8fafc',
+                    titleFont: { family: 'Inter', size: 12, weight: '600' },
+                    bodyColor: '#cbd5e1',
                     bodyFont: { family: 'Inter', size: 12 },
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
                     callbacks: {
                         label: function(context) {
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -423,6 +439,10 @@ function renderizarGraficoProdutos() {
     }
 
     const ctx = canvas.getContext('2d');
+    const gradiente = ctx.createLinearGradient(0, 0, 0, 240);
+    gradiente.addColorStop(0, '#0ea5e9');
+    gradiente.addColorStop(1, '#0284c7');
+
     chartProdutosInstance = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -430,9 +450,10 @@ function renderizarGraficoProdutos() {
             datasets: [{
                 label: 'Unidades Vendidas',
                 data: dados,
-                backgroundColor: ['#5BA4E6', '#4CAF82', '#F5A623', '#2a4f7a', '#D4A84B'],
-                borderRadius: 6,
-                maxBarThickness: 45
+                backgroundColor: ['#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#3b82f6'],
+                borderRadius: 8,
+                borderSkipped: false,
+                maxBarThickness: 38
             }]
         },
         options: {
@@ -441,10 +462,15 @@ function renderizarGraficoProdutos() {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#1E3A5F',
-                    padding: 10,
-                    titleFont: { family: 'Poppins', size: 12 },
+                    backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                    titleColor: '#f8fafc',
+                    titleFont: { family: 'Inter', size: 12, weight: '600' },
+                    bodyColor: '#cbd5e1',
                     bodyFont: { family: 'Inter', size: 12 },
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
                     callbacks: {
                         title: function(items) {
                             const idx = items[0].dataIndex;
@@ -460,19 +486,23 @@ function renderizarGraficoProdutos() {
             },
             scales: {
                 x: {
-                    grid: { display: false },
+                    grid: { display: false, drawBorder: false },
                     ticks: {
-                        color: '#5a6f85',
+                        color: '#64748b',
                         font: { family: 'Inter', size: 11 }
                     }
                 },
                 y: {
                     beginAtZero: true,
-                    grid: { color: '#f0f4f8' },
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.15)',
+                        borderDash: [4, 4],
+                        drawBorder: false
+                    },
                     ticks: {
                         stepSize: 1,
                         precision: 0,
-                        color: '#5a6f85',
+                        color: '#64748b',
                         font: { family: 'Inter', size: 11 }
                     }
                 }

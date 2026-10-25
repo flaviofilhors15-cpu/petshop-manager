@@ -31,6 +31,18 @@
                     </p>
                 </div>
                 <div class="actions">
+                    <button class="btn btn-secondary" onclick="abrirModalImportarHistorico()" title="Importar faturamento e despesas dos últimos meses" style="border: 1px solid #0284c7; color: #0284c7; background: #f0f9ff; font-weight: 600;">
+                        <i data-lucide="file-up"></i>
+                        <span>Importar Meses Anteriores</span>
+                    </button>
+                    <button class="btn btn-success" onclick="openRevenueModal()" style="background: #10b981; color: #fff; font-weight: 600;">
+                        <i data-lucide="plus-circle"></i>
+                        <span>+ Nova Receita</span>
+                    </button>
+                    <button class="btn btn-primary" onclick="openExpenseModal()">
+                        <i data-lucide="plus-circle"></i>
+                        <span>+ Nova Despesa</span>
+                    </button>
                     <button class="btn btn-secondary" onclick="abrirModalRetiradaLucro()" title="Registrar retirada de lucro pessoal ou pró-labore">
                         <i data-lucide="wallet"></i>
                         <span>Retirar Lucro</span>
@@ -38,10 +50,6 @@
                     <button class="btn btn-secondary" onclick="exportFinanceReport()">
                         <i data-lucide="printer"></i>
                         <span>Imprimir Relatório</span>
-                    </button>
-                    <button class="btn btn-primary" onclick="openExpenseModal()">
-                        <i data-lucide="plus-circle"></i>
-                        <span>Nova Despesa</span>
                     </button>
                 </div>
             </div>
@@ -255,68 +263,79 @@
             <!-- ============================================== -->
             <div class="tab-pane" id="tab-projecao">
                 <!-- Card de Reserva de Emergência e Indicadores -->
-                <div class="card mb-2" style="background: linear-gradient(135deg, #1e3a5f, #0f172a); color: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                <div class="card mb-2" style="background: linear-gradient(135deg, #0f172a, #1e293b); color: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                         <div>
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <i data-lucide="shield-check" style="color: #34d399; width: 22px; height: 22px;"></i>
-                                <h2 style="font-size: 1.25rem; color: #fff; margin: 0; font-weight: 700;">Reserva de Emergência da Empresa</h2>
+                                <i data-lucide="shield-check" style="color: #f59e0b; width: 24px; height: 24px;"></i>
+                                <h2 style="font-size: 1.25rem; color: #fff; margin: 0; font-weight: 700;">🛡️ Cofre da Reserva de Emergência (Separado do Giro)</h2>
                             </div>
                             <p style="color: #94a3b8; font-size: 0.85rem; margin: 4px 0 0;">
-                                O caixa acumulado protege a sua empresa contra meses fracos e garante o pagamento de salários e fornecedores.
+                                Fundo blindado e protegido para imprevistos. O dinheiro guardado aqui é <strong>separado do caixa de giro diário</strong> que você movimenta para pagar contas.
                             </p>
                         </div>
-                        <div style="display: flex; gap: 8px;">
-                            <button type="button" class="btn btn-sm" onclick="abrirModalRetiradaLucro()" style="background: #f59e0b; color: #fff; border: none; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-                                <i data-lucide="wallet" style="width: 14px; height: 14px;"></i> Retirar Lucro (Pró-labore)
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-sm" onclick="abrirModalAporteReserva()" style="background: #10b981; color: #fff; border: none; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
+                                <i data-lucide="arrow-down-circle" style="width: 14px; height: 14px;"></i> Guardar na Reserva
                             </button>
-                            <button type="button" class="btn btn-sm btn-secondary" onclick="renderProjecaoTab()" style="background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2); display: inline-flex; align-items: center; gap: 6px;">
-                                <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Recalcular Projeção
+                            <button type="button" class="btn btn-sm" onclick="abrirModalResgateReserva()" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
+                                <i data-lucide="arrow-up-circle" style="width: 14px; height: 14px;"></i> Resgatar para Giro
+                            </button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="abrirModalAjustarSaldos()" style="background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.25); display: inline-flex; align-items: center; gap: 5px;" title="Definir os saldos reais atuais do seu pet shop">
+                                <i data-lucide="settings" style="width: 14px; height: 14px;"></i> Ajustar Saldos Reais
+                            </button>
+                            <button type="button" class="btn btn-sm" onclick="abrirModalRetiradaLucro()" style="background: #f59e0b; color: #fff; border: none; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
+                                <i data-lucide="wallet" style="width: 14px; height: 14px;"></i> Retirar Lucro (Pró-labore)
                             </button>
                         </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.25rem;">
+                        <div style="background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 10px; border: 1px solid rgba(245, 158, 11, 0.3);">
+                            <div style="font-size: 0.75rem; color: #fbbf24; text-transform: uppercase; font-weight: 700; display: flex; justify-content: space-between;">
+                                <span>🛡️ Cofre da Reserva (Blindado)</span>
+                                <i data-lucide="lock" style="width: 13px; height: 13px;"></i>
+                            </div>
+                            <div style="font-size: 1.6rem; font-weight: 800; color: #fbbf24; margin: 4px 0;" id="proj-reserva-atual">R$ 0,00</div>
+                            <div style="font-size: 0.72rem; color: #94a3b8;">Fundo de segurança intocável</div>
+                        </div>
+
                         <div style="background: rgba(255,255,255,0.06); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
-                            <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">Reserva Acumulada em Caixa</div>
-                            <div style="font-size: 1.5rem; font-weight: 800; color: #38bdf8; margin: 4px 0;" id="proj-reserva-atual">R$ 0,00</div>
-                            <div style="font-size: 0.72rem; color: #94a3b8;">Saldo líquido real da empresa</div>
+                            <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">💼 Caixa de Giro (Operacional)</div>
+                            <div style="font-size: 1.6rem; font-weight: 800; color: #38bdf8; margin: 4px 0;" id="proj-giro-atual">R$ 0,00</div>
+                            <div style="font-size: 0.72rem; color: #94a3b8;">Dinheiro em movimento para contas</div>
                         </div>
 
                         <div style="background: rgba(255,255,255,0.06); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
                             <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">Custo Fixo Médio / Mês</div>
-                            <div style="font-size: 1.5rem; font-weight: 800; color: #f87171; margin: 4px 0;" id="proj-custo-fixo">R$ 0,00</div>
+                            <div style="font-size: 1.6rem; font-weight: 800; color: #f87171; margin: 4px 0;" id="proj-custo-fixo">R$ 0,00</div>
                             <div style="font-size: 0.72rem; color: #94a3b8;">Despesas fixas recorrentes</div>
                         </div>
 
                         <div style="background: rgba(255,255,255,0.06); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
-                            <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">Autonomia Garantida</div>
-                            <div style="font-size: 1.5rem; font-weight: 800; color: #34d399; margin: 4px 0;" id="proj-meses-autonomia">0.0 meses</div>
-                            <div style="font-size: 0.72rem; color: #94a3b8;">De sobrevivência sem novas vendas</div>
-                        </div>
-
-                        <div style="background: rgba(255,255,255,0.06); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
-                            <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">Retiradas de Lucro no Ano</div>
-                            <div style="font-size: 1.5rem; font-weight: 800; color: #fbbf24; margin: 4px 0;" id="proj-total-retiradas">R$ 0,00</div>
-                            <div style="font-size: 0.72rem; color: #94a3b8;">Distribuído aos sócios/dono</div>
+                            <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">Autonomia da Reserva</div>
+                            <div style="font-size: 1.6rem; font-weight: 800; color: #34d399; margin: 4px 0;" id="proj-meses-autonomia">0.0 meses</div>
+                            <div style="font-size: 0.72rem; color: #94a3b8;">De contas pagas pelo cofre</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Gráfico de Evolução do Saldo Acumulado & Fluxo -->
                 <div class="card mb-2" style="padding: 1.25rem 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
                         <div>
                             <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0;">
-                                Evolução do Saldo Acumulado & Fluxo Previsto
+                                Fluxo Operacional de Giro & Projeção Futura
                             </h3>
                             <span style="font-size: 0.8rem; color: var(--text-secondary);">
-                                Demonstrativo do fluxo mensal e projeção dos próximos 3 meses
+                                Faturamento estimado vs Contas do mês e evolução do caixa de giro
                             </span>
                         </div>
-                        <span class="badge badge-info" style="font-size: 0.75rem;">Projeção Inteligente</span>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="abrirModalAjustarSaldos()" style="font-size: 0.75rem;">
+                            <i data-lucide="sliders"></i> Ajustar Metas e Saldo
+                        </button>
                     </div>
-                    <div style="height: 270px;">
+                    <div style="height: 280px;">
                         <canvas id="chartProjecaoMeses"></canvas>
                     </div>
                 </div>
@@ -326,11 +345,11 @@
                     <div class="table-header">
                         <div style="display: flex; align-items: center; gap: 0.75rem;">
                             <h3 style="font-size: 1rem; color: var(--text-primary); margin: 0;">
-                                Demonstrativo Mês a Mês (Rollover de Caixa)
+                                Demonstrativo do Caixa de Giro (Mês a Mês)
                             </h3>
                         </div>
                         <span style="font-size: 0.82rem; color: var(--text-secondary);">
-                            Saldo Inicial + Entradas − Saídas = Saldo Acumulado
+                            Saldo Inicial + Entradas − Saídas = Saldo de Giro Final
                         </span>
                     </div>
 
@@ -338,11 +357,11 @@
                         <thead>
                             <tr>
                                 <th>Mês / Período</th>
-                                <th style="text-align: right;">Saldo Inicial</th>
+                                <th style="text-align: right;">Giro Inicial</th>
                                 <th style="text-align: right;">Receitas Estimadas</th>
                                 <th style="text-align: right;">Despesas Previstas</th>
                                 <th style="text-align: right;">Resultado do Mês</th>
-                                <th style="text-align: right;">🏁 Saldo Final Acumulado</th>
+                                <th style="text-align: right;">💼 Saldo Final de Giro</th>
                                 <th style="text-align: center;">Saúde Financeira</th>
                             </tr>
                         </thead>
@@ -398,13 +417,21 @@
 
                 <!-- Tabela de Receitas -->
                 <div class="table-container">
-                    <div class="table-header">
+                    <div class="table-header" style="flex-wrap: wrap; gap: 0.75rem;">
                         <div style="display: flex; align-items: center; gap: 0.75rem;">
                             <h3 style="font-size: 1rem; color: var(--text-primary);">Lista de Receitas</h3>
                             <span class="badge badge-success" id="rec-total-count">0 registros</span>
                         </div>
-                        <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">
-                            Total no período: <span class="text-success" id="rec-total-valor">R$ 0,00</span>
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-left: auto; flex-wrap: wrap;">
+                            <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">
+                                Total no período: <span class="text-success" id="rec-total-valor">R$ 0,00</span>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" onclick="abrirModalImportarHistorico()" style="display: inline-flex; align-items: center; gap: 4px; border: 1px solid #0284c7; color: #0284c7; background: #f0f9ff;">
+                                <i data-lucide="file-up"></i> Importar Histórico
+                            </button>
+                            <button class="btn btn-success btn-sm" onclick="openRevenueModal()" style="display: inline-flex; align-items: center; gap: 4px; background: #10b981; color: #fff;">
+                                <i data-lucide="plus"></i> Nova Receita
+                            </button>
                         </div>
                     </div>
 
@@ -414,8 +441,9 @@
                                 <th style="width: 120px;">Data</th>
                                 <th>Descrição</th>
                                 <th style="width: 140px;">Categoria</th>
-                                <th style="width: 160px;">Forma de Pgto</th>
+                                <th style="width: 150px;">Forma de Pgto</th>
                                 <th style="width: 130px; text-align: right;">Valor</th>
+                                <th style="width: 80px; text-align: center;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="rec-table-body">
@@ -723,6 +751,282 @@
                 <button type="button" class="btn btn-primary" onclick="window.print()">
                     <i data-lucide="printer"></i> Imprimir / Salvar PDF
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: APORTE NA RESERVA DE EMERGÊNCIA -->
+    <!-- ============================================== -->
+    <div class="modal-overlay" id="modal-aporte-reserva">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>📥 Guardar Dinheiro na Reserva</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-aporte-reserva')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:0.75rem 1rem; margin-bottom:1rem; font-size:0.82rem; color:#065f46;">
+                    🛡️ Este valor será transferido do seu <strong>Caixa de Giro</strong> para o <strong>Cofre da Reserva de Emergência</strong>, ficando protegido e intocável para despesas comuns.
+                </div>
+                <form id="form-aporte-reserva" onsubmit="salvarAporteReserva(event)">
+                    <div class="form-group">
+                        <label for="aporte-valor">Valor a Guardar na Reserva (R$) <span class="text-danger">*</span></label>
+                        <input type="number" id="aporte-valor" step="0.01" min="0.01" required placeholder="Ex: 500,00" autofocus>
+                    </div>
+                    <div class="form-group">
+                        <label for="aporte-origem">Origem dos Recursos</label>
+                        <select id="aporte-origem" required>
+                            <option value="Pix" selected>⚡ Conta Corrente / Pix da Loja</option>
+                            <option value="Dinheiro">💵 Gaveta em Espécie da Loja</option>
+                        </select>
+                    </div>
+                    <div class="modal-footer" style="padding: 1rem 0 0; margin-top: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-aporte-reserva')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" style="background:#10b981; border-color:#10b981;">
+                            <i data-lucide="check"></i> Confirmar Aporte
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: RESGATE DA RESERVA PARA O GIRO -->
+    <!-- ============================================== -->
+    <div class="modal-overlay" id="modal-resgate-reserva">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>📤 Resgatar da Reserva para o Giro</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-resgate-reserva')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:0.75rem 1rem; margin-bottom:1rem; font-size:0.82rem; color:#92400e;">
+                    ⚠️ Atenção: A reserva só deve ser resgatada em emergências ou para cobrir despesas extraordinárias.
+                </div>
+                <form id="form-resgate-reserva" onsubmit="salvarResgateReserva(event)">
+                    <div class="form-group">
+                        <label for="resgate-valor">Valor a Resgatar para o Giro (R$) <span class="text-danger">*</span></label>
+                        <input type="number" id="resgate-valor" step="0.01" min="0.01" required placeholder="Ex: 1000,00" autofocus>
+                    </div>
+                    <div class="form-group">
+                        <label for="resgate-motivo">Motivo do Resgate <span class="text-danger">*</span></label>
+                        <input type="text" id="resgate-motivo" required placeholder="Ex: Queda atípica de movimento, reposição emergencial">
+                    </div>
+                    <div class="modal-footer" style="padding: 1rem 0 0; margin-top: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-resgate-reserva')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" style="background:#f59e0b; border-color:#f59e0b;">
+                            <i data-lucide="check"></i> Confirmar Resgate
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: AJUSTE DE SALDO INICIAL E RESERVA -->
+    <!-- ============================================== -->
+    <div class="modal-overlay" id="modal-ajustar-saldos">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>⚙️ Definir Meus Saldos Reais</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-ajustar-saldos')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:0.82rem; color:var(--text-secondary); margin-top:0;">
+                    Informe os valores que a sua empresa possui hoje no banco e no cofre para calibrar a projeção com a sua realidade.
+                </p>
+                <form id="form-ajustar-saldos" onsubmit="salvarSaldosReais(event)">
+                    <div class="form-group">
+                        <label for="ajuste-saldo-giro">Saldo Atual do Caixa de Giro (Conta Corrente + Dinheiro)</label>
+                        <input type="number" id="ajuste-saldo-giro" step="0.01" min="0" required placeholder="Ex: 4500,00">
+                    </div>
+                    <div class="form-group">
+                        <label for="ajuste-saldo-reserva">Saldo Guardado na Reserva de Emergência (Poupança / Cofre)</label>
+                        <input type="number" id="ajuste-saldo-reserva" step="0.01" min="0" required placeholder="Ex: 5000,00">
+                    </div>
+                    <div class="form-group">
+                        <label for="ajuste-meta-faturamento">Meta de Faturamento Médio Mensal (R$)</label>
+                        <input type="number" id="ajuste-meta-faturamento" step="0.01" min="1000" placeholder="Ex: 12000,00">
+                        <span style="font-size:0.75rem; color:var(--text-light);">Usado para projetar os próximos meses com base na sua meta.</span>
+                    </div>
+                    <div class="modal-footer" style="padding: 1rem 0 0; margin-top: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-ajustar-saldos')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i data-lucide="save"></i> Salvar Calibração
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: NOVA RECEITA / ENTRADA MANUAL -->
+    <!-- ============================================== -->
+    <div class="modal-overlay" id="modal-receita">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2 id="modal-receita-titulo">Nova Receita / Entrada</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-receita')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-receita" onsubmit="salvarReceita(event)">
+                    <input type="hidden" id="receita-id">
+                    
+                    <div class="form-group">
+                        <label for="receita-descricao">Descrição da Entrada <span class="text-danger">*</span></label>
+                        <input type="text" id="receita-descricao" required placeholder="Ex: Faturamento Julho, Venda Balcão, Consultoria...">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="receita-categoria">Categoria <span class="text-danger">*</span></label>
+                            <select id="receita-categoria" required>
+                                <option value="Faturamento Histórico">Faturamento Histórico (Meses Anteriores)</option>
+                                <option value="Serviço">Serviços Pet</option>
+                                <option value="Produto">Venda de Produtos</option>
+                                <option value="Outros">Outras Entradas</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="receita-valor">Valor (R$) <span class="text-danger">*</span></label>
+                            <input type="number" id="receita-valor" step="0.01" min="0.01" required placeholder="0,00">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="receita-pagamento">Forma de Pagamento <span class="text-danger">*</span></label>
+                            <select id="receita-pagamento" required>
+                                <option value="Pix">Pix / Transferência</option>
+                                <option value="Dinheiro">Dinheiro (Espécie)</option>
+                                <option value="Cartão Crédito">Cartão de Crédito</option>
+                                <option value="Cartão Débito">Cartão de Débito</option>
+                                <option value="Boleto">Boleto Bancário</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="receita-data">Data de Entrada <span class="text-danger">*</span></label>
+                            <input type="date" id="receita-data" required title="Permite escolher qualquer data do passado ou atual">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="receita-observacoes">Observações (Opcional)</label>
+                        <textarea id="receita-observacoes" rows="2" placeholder="Detalhes adicionais ou referência..."></textarea>
+                    </div>
+
+                    <div class="modal-footer" style="padding: 1rem 0 0; margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-receita')">Cancelar</button>
+                        <button type="submit" class="btn btn-success" style="background: #10b981; color: #fff;">
+                            <i data-lucide="check"></i> Salvar Receita
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: IMPORTAR HISTÓRICO DE MESES ANTERIORES -->
+    <!-- ============================================== -->
+    <div class="modal-overlay" id="modal-importar-historico">
+        <div class="modal" style="max-width: 620px;">
+            <div class="modal-header">
+                <h2>📥 Importar Meses Anteriores para os Gráficos</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-importar-historico')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0; line-height: 1.4;">
+                    Alimente os últimos 3 a 6 meses da sua empresa para preencher os gráficos históricos de faturamento, custos e evolução.
+                </p>
+
+                <!-- Abas internas de escolha -->
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <button type="button" id="tab-btn-mes-rapido" class="btn btn-sm btn-primary" onclick="alternarModoImportacao('rapido')">
+                        ⚡ Lançar Resumo do Mês
+                    </button>
+                    <button type="button" id="tab-btn-mes-csv" class="btn btn-sm btn-secondary" onclick="alternarModoImportacao('csv')">
+                        📁 Planilha (CSV / Excel)
+                    </button>
+                </div>
+
+                <!-- MODO 1: Lançar Resumo do Mês (Super rápido) -->
+                <div id="modo-importacao-rapido">
+                    <form id="form-import-mes-rapido" onsubmit="salvarMesConsolidado(event)">
+                        <div class="form-group">
+                            <label for="import-mes-select">Selecione o Mês a Importar <span class="text-danger">*</span></label>
+                            <select id="import-mes-select" required>
+                                <!-- Preenchido dinamicamente com os últimos 12 meses -->
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="import-faturamento">Faturamento Total do Mês (R$) <span class="text-danger">*</span></label>
+                                <input type="number" id="import-faturamento" step="0.01" min="0" required placeholder="Ex: 18500,00">
+                                <span style="font-size: 0.72rem; color: var(--text-light);">Total vendido / recebido naquele mês.</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="import-despesas">Despesas Totais do Mês (R$) <span class="text-danger">*</span></label>
+                                <input type="number" id="import-despesas" step="0.01" min="0" required placeholder="Ex: 11200,00">
+                                <span style="font-size: 0.72rem; color: var(--text-light);">Custos, boletos e compras daquele mês.</span>
+                            </div>
+                        </div>
+
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem; font-size: 0.8rem; color: #64748b; margin-top: 0.75rem;">
+                            💡 <strong>Dica:</strong> Basta preencher o mês e clicar em salvar. O sistema insere o registro com a data do mês correspondente e atualiza os gráficos instantaneamente.
+                        </div>
+
+                        <div class="modal-footer" style="padding: 1rem 0 0; margin-top: 1.25rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                            <button type="button" class="btn btn-secondary" onclick="closeModal('modal-importar-historico')">Fechar</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i data-lucide="check"></i> Salvar Mês no Histórico
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- MODO 2: Planilha CSV -->
+                <div id="modo-importacao-csv" style="display: none;">
+                    <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 0.85rem; margin-bottom: 1rem;">
+                        <div style="font-weight: 600; font-size: 0.85rem; color: #0369a1; margin-bottom: 0.35rem;">
+                            📋 Como importar via planilha:
+                        </div>
+                        <p style="font-size: 0.78rem; color: #0c4a6e; margin: 0 0 0.5rem;">
+                            Baixe o nosso modelo em CSV, preencha com as receitas e despesas dos meses passados e envie o arquivo abaixo.
+                        </p>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="baixarModeloCSV()" style="background: #fff; border: 1px solid #0284c7; color: #0284c7; font-weight: 600;">
+                            <i data-lucide="download"></i> Baixar Planilha Modelo (.CSV)
+                        </button>
+                    </div>
+
+                    <form id="form-import-csv" onsubmit="importarArquivoCSV(event)">
+                        <div class="form-group">
+                            <label for="csv-file-input">Selecione o arquivo CSV preenchido <span class="text-danger">*</span></label>
+                            <input type="file" id="csv-file-input" accept=".csv" required style="padding: 0.5rem; border: 1px dashed var(--border-color); background: #f8fafc; width: 100%; border-radius: 6px;">
+                        </div>
+
+                        <div class="modal-footer" style="padding: 1rem 0 0; margin-top: 1.25rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                            <button type="button" class="btn btn-secondary" onclick="closeModal('modal-importar-historico')">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" style="background: #0284c7; border-color: #0284c7;">
+                                <i data-lucide="upload-cloud"></i> Processar e Importar Planilha
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
