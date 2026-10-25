@@ -267,10 +267,14 @@ function renderResumoTab() {
     // ====================================================
     // CÁLCULOS DO PAINEL DE CAIXA REAL & GASTOS PREVISTOS
     // ====================================================
-    // 1. Saldo Geral Acumulado da Empresa (histórico completo de receitas menos despesas pagas)
-    let saldoDinheiro = 0;
-    let saldoPix = 0;
-    let saldoCartoes = 0;
+    // 1. Saldo Geral Acumulado da Empresa (histórico de receitas menos despesas pagas + abertura configurada)
+    const isCleanMode = localStorage.getItem('ps_data_state') === 'clean';
+    const settings = DB.get(STORAGE_KEYS.SETTINGS) || {};
+    const caixaInit = settings.caixa || {};
+
+    let saldoDinheiro = Number(caixaInit.gaveta) || 0;
+    let saldoPix = Number(caixaInit.pixBanco) || 0;
+    let saldoCartoes = Number(caixaInit.cartoesCompensar) || 0;
 
     revenues.forEach(r => {
         const val = Number(r.valor) || 0;
@@ -307,8 +311,9 @@ function renderResumoTab() {
     const calibradoGiro = getSaldoGiroCalibrado();
     if (calibradoGiro !== null) {
         saldoTotalCaixa = calibradoGiro;
-    } else if (saldoTotalCaixa <= 0) {
-        // Se a base inicial estiver descalibrada (despesas de teste sem saldo de abertura), inicia com base saudável
+    } else if (isCleanMode || localStorage.getItem('ps_data_state') !== 'demo') {
+        // Em loja real limpa ou sem movimentações, preserva rigorosamente R$ 0,00 sem injetar dados fictícios
+    } else if (saldoTotalCaixa <= 0 && revenues.length === 0 && expenses.length === 0) {
         saldoTotalCaixa = 3850.00;
         saldoPix = 2500.00;
         saldoDinheiro = 850.00;
@@ -628,7 +633,9 @@ const STORAGE_EXTRA = {
 
 function getSaldoReservaEmergencia() {
     const val = localStorage.getItem(STORAGE_EXTRA.RESERVA_EMERGENCIA);
-    return val !== null ? Math.max(0, parseFloat(val)) : 5000.00; // Reserva inicial padrão segura
+    if (val !== null) return Math.max(0, parseFloat(val));
+    const isClean = localStorage.getItem('ps_data_state') === 'clean';
+    return isClean ? 0.00 : 5000.00; // Reserva inicial padrão segura se demo
 }
 
 function setSaldoReservaEmergencia(val) {
@@ -642,12 +649,15 @@ function getSaldoGiroCalibrado() {
 
 function getMetaFaturamento() {
     const val = localStorage.getItem(STORAGE_EXTRA.META_FATURAMENTO);
-    return val !== null ? parseFloat(val) : 12000.00;
+    if (val !== null) return Math.max(0, parseFloat(val));
+    const isClean = localStorage.getItem('ps_data_state') === 'clean';
+    return isClean ? 0.00 : 12000.00;
 }
 
 function renderProjecaoTab() {
     const revenues = DB.get(STORAGE_KEYS.REVENUES) || [];
     const expenses = DB.get(STORAGE_KEYS.EXPENSES) || [];
+    const isCleanMode = localStorage.getItem('ps_data_state') === 'clean';
 
     // 1. Cofre da Reserva de Emergência (TOTALMENTE SEPARADO DO GIRO)
     const saldoReserva = getSaldoReservaEmergencia();
@@ -664,8 +674,11 @@ function renderProjecaoTab() {
             .filter(e => (e.status || 'pago') === 'pago')
             .reduce((acc, e) => acc + (Number(e.valor) || 0), 0);
         const difReal = totalRecs - totalDesps;
-        // Se a base de demonstração estiver negativa por falta de vendas passadas, inicia o giro com base operacional saudável
-        saldoGiroAtual = difReal > 0 ? difReal : 3850.00;
+        if (isCleanMode || localStorage.getItem('ps_data_state') !== 'demo') {
+            saldoGiroAtual = Math.max(0, difReal);
+        } else {
+            saldoGiroAtual = difReal > 0 ? difReal : 3850.00;
+        }
     }
 
     // 3. Custo Fixo Médio Mensal Recorrente
@@ -679,7 +692,7 @@ function renderProjecaoTab() {
     });
     let custoFixoMensal = 0;
     mapFixas.forEach(d => { custoFixoMensal += Number(d.valor) || 0; });
-    if (custoFixoMensal === 0) {
+    if (custoFixoMensal === 0 && !isCleanMode && localStorage.getItem('ps_data_state') === 'demo') {
         custoFixoMensal = 4800.00;
     }
 
@@ -1058,7 +1071,8 @@ function abrirModalAjustarSaldos() {
     const elReserva = document.getElementById('ajuste-saldo-reserva');
     const elMeta = document.getElementById('ajuste-meta-faturamento');
 
-    if (elGiro) elGiro.value = (getSaldoGiroCalibrado() !== null ? getSaldoGiroCalibrado() : 4500.00).toFixed(2);
+    const isCleanMode = localStorage.getItem('ps_data_state') === 'clean';
+    if (elGiro) elGiro.value = (getSaldoGiroCalibrado() !== null ? getSaldoGiroCalibrado() : (isCleanMode ? 0.00 : 4500.00)).toFixed(2);
     if (elReserva) elReserva.value = getSaldoReservaEmergencia().toFixed(2);
     if (elMeta) elMeta.value = getMetaFaturamento().toFixed(2);
 

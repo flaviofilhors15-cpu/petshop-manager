@@ -2146,7 +2146,7 @@ async function zerarPainelLojaReal(confirmar = true) {
     DB.save(STORAGE_KEYS.STOCK_MOVEMENTS, []);
     DB.save(STORAGE_KEYS.PURCHASE_ORDERS, []);
 
-    // Zerar saldos do caixa
+    // Zerar saldos do caixa e calibragens financeiras
     const settings = DB.get(STORAGE_KEYS.SETTINGS) || {};
     settings.caixa = {
         gaveta: 0,
@@ -2155,6 +2155,11 @@ async function zerarPainelLojaReal(confirmar = true) {
         reserva: 0
     };
     DB.save(STORAGE_KEYS.SETTINGS, settings);
+
+    localStorage.removeItem('ps_saldo_giro_calibrado');
+    localStorage.setItem('ps_reserva_emergencia', '0.00');
+    localStorage.setItem('ps_meta_faturamento', '0.00');
+    localStorage.setItem('ps_historico_reserva', '[]');
 
     logAudit('RESET_CLEAN', 'Administração', 'Painel zerado para operação de loja real.');
     showToast('Painel zerado com sucesso! Todos os números agora estão em R$ 0,00.', 'success');
