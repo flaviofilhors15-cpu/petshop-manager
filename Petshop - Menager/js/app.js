@@ -10,6 +10,8 @@ const STORAGE_KEYS = {
     EMPLOYEES: 'ps_employees',
     SETTINGS: 'ps_settings',
     STOCK_MOVEMENTS: 'ps_stock_movements',
+    PURCHASE_ORDERS: 'ps_purchase_orders',
+    SUPPLIERS: 'ps_suppliers',
     AUDIT_LOGS: 'ps_audit_logs'
 };
 

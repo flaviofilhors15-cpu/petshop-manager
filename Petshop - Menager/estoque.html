@@ -107,6 +107,19 @@
                     <p class="text-muted" style="margin-top: 0.25rem;">Inventário de produtos, controle de custos, margens e movimentações</p>
                 </div>
                 <div class="actions">
+                    <button class="btn btn-secondary" onclick="abrirModalPedidosCompra()" style="background:#f0f9ff; color:#0369a1; border-color:#bae6fd; position:relative;" title="Pedidos de Compra, Prazos de Entrega e Fornecedores">
+                        <i data-lucide="truck"></i>
+                        Pedidos a Caminho
+                        <span id="badge-pedidos-transito" class="badge" style="background:#0284c7; color:#ffffff; font-size:0.7rem; padding:1px 6px; margin-left:4px; border-radius:10px;">0</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="abrirModalBalanco()" title="Conferência física de prateleira">
+                        <i data-lucide="scale"></i>
+                        Balanço Físico
+                    </button>
+                    <button class="btn btn-secondary" onclick="abrirModalImportExport()" title="Importar ou exportar planilha CSV">
+                        <i data-lucide="file-spreadsheet"></i>
+                        Planilhas CSV
+                    </button>
                     <button class="btn btn-secondary" onclick="abrirModalEtiquetas()">
                         <i data-lucide="tag"></i>
                         Etiquetas
@@ -134,25 +147,90 @@
                 </div>
             </div>
 
-            <!-- Cards de Métricas Rápidas (Grid de 5 métricas essenciais) -->
-            <div class="stats-grid" style="grid-template-columns: repeat(5, 1fr);">
-                <div class="stat-card">
-                    <div class="stat-info">
-                        <div class="stat-value" id="stat-total-produtos">0</div>
-                        <div class="stat-label">Total de Produtos</div>
+            <!-- 1. BLOCO: AVALIAÇÃO PATRIMONIAL & RESULTADO PROJETADO DO ESTOQUE -->
+            <div style="margin-bottom: 1.5rem; background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem; margin-bottom: 1rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.25rem;">🏷️</span>
+                            <h2 style="font-size: 1.15rem; color: var(--text-primary); margin: 0; font-weight: 700;">
+                                Avaliação Patrimonial & Lucro Projetado do Estoque
+                            </h2>
+                            <span class="badge badge-info" style="font-size: 0.72rem; padding: 2px 8px;">Inventário & Rentabilidade</span>
+                        </div>
+                        <span style="font-size: 0.8rem; color: var(--text-secondary);">
+                            Separação contábil entre o capital investido (preço de custo pago) e o retorno potencial de vendas e lucro bruto na prateleira.
+                        </span>
                     </div>
-                    <div class="stat-icon">
-                        <i data-lucide="package"></i>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="badge badge-success" id="stat-margem-media" style="font-size: 0.8rem; padding: 4px 10px; font-weight: 700;">
+                            0.0% Margem Média
+                        </span>
                     </div>
                 </div>
 
-                <div class="stat-card accent">
+                <!-- Grid dos 4 KPIs Financeiros do Estoque -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+                    <!-- KPI 1: Capital Investido (Custo) -->
+                    <div style="display: flex; align-items: center; gap: 0.85rem; padding: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #4f46e5;">
+                        <div style="width: 44px; height: 44px; border-radius: 10px; background: #eef2ff; color: #4f46e5; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i data-lucide="wallet" style="width: 22px; height: 22px;"></i>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;">Capital Comprado (Custo)</span>
+                            <div style="font-size: 1.3rem; font-weight: 700; color: #1e1b4b; line-height: 1.2; margin: 2px 0;" id="stat-custo-estoque">R$ 0,00</div>
+                            <span style="font-size: 0.72rem; color: #64748b;">Total pago aos fornecedores</span>
+                        </div>
+                    </div>
+
+                    <!-- KPI 2: Potencial de Venda (Faturamento) -->
+                    <div style="display: flex; align-items: center; gap: 0.85rem; padding: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #0284c7;">
+                        <div style="width: 44px; height: 44px; border-radius: 10px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i data-lucide="circle-dollar-sign" style="width: 22px; height: 22px;"></i>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;">Potencial de Venda (Bruto)</span>
+                            <div style="font-size: 1.3rem; font-weight: 700; color: #0369a1; line-height: 1.2; margin: 2px 0;" id="stat-valor-estoque">R$ 0,00</div>
+                            <span style="font-size: 0.72rem; color: #64748b;">Se vender todo o estoque atual</span>
+                        </div>
+                    </div>
+
+                    <!-- KPI 3: Lucro Bruto Projetado -->
+                    <div style="display: flex; align-items: center; gap: 0.85rem; padding: 1rem; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; border-left: 4px solid #16a34a;">
+                        <div style="width: 44px; height: 44px; border-radius: 10px; background: #dcfce7; color: #16a34a; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i data-lucide="trending-up" style="width: 22px; height: 22px;"></i>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: #15803d; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;">Lucro Bruto Projetado</span>
+                            <div style="font-size: 1.3rem; font-weight: 700; color: #15803d; line-height: 1.2; margin: 2px 0;" id="stat-lucro-projetado">R$ 0,00</div>
+                            <span style="font-size: 0.72rem; color: #16a34a;">Retorno livre na prateleira</span>
+                        </div>
+                    </div>
+
+                    <!-- KPI 4: Compras / Entradas do Mês -->
+                    <div style="display: flex; align-items: center; gap: 0.85rem; padding: 1rem; background: #faf5ff; border: 1px solid #f3e8ff; border-radius: 10px; border-left: 4px solid #9333ea;">
+                        <div style="width: 44px; height: 44px; border-radius: 10px; background: #f3e8ff; color: #9333ea; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i data-lucide="truck" style="width: 22px; height: 22px;"></i>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: #7e22ce; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;">Compras Reposição (Mês)</span>
+                            <div style="font-size: 1.3rem; font-weight: 700; color: #6b21a8; line-height: 1.2; margin: 2px 0;" id="stat-compras-mes">R$ 0,00</div>
+                            <span style="font-size: 0.72rem; color: #9333ea;">Entradas registradas neste mês</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. CARDS DE CONTROLE OPERACIONAL & ALERTAS DE ESTOQUE -->
+            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 1.25rem;">
+                <div class="stat-card">
                     <div class="stat-info">
-                        <div class="stat-value" id="stat-valor-estoque">R$ 0,00</div>
-                        <div class="stat-label">Valor Venda (Estoque)</div>
+                        <div class="stat-value" id="stat-total-produtos">0</div>
+                        <div class="stat-label">Itens Cadastrados</div>
+                        <small class="text-muted" id="stat-total-pecas" style="font-size: 0.72rem;">0 un. físicas em saldo</small>
                     </div>
                     <div class="stat-icon">
-                        <i data-lucide="dollar-sign"></i>
+                        <i data-lucide="package"></i>
                     </div>
                 </div>
 
@@ -160,6 +238,7 @@
                     <div class="stat-info">
                         <div class="stat-value" id="stat-estoque-baixo">0</div>
                         <div class="stat-label">Estoque Baixo</div>
+                        <small class="text-warning" style="font-size: 0.72rem;">No ponto de reposição</small>
                     </div>
                     <div class="stat-icon">
                         <i data-lucide="alert-triangle"></i>
@@ -170,6 +249,7 @@
                     <div class="stat-info">
                         <div class="stat-value" id="stat-esgotados">0</div>
                         <div class="stat-label">Itens Esgotados</div>
+                        <small class="text-danger" style="font-size: 0.72rem;">Ruptura imediata</small>
                     </div>
                     <div class="stat-icon">
                         <i data-lucide="x-circle"></i>
@@ -180,6 +260,7 @@
                     <div class="stat-info">
                         <div class="stat-value" id="stat-vencendo-mes" style="color: #d97706;">0</div>
                         <div class="stat-label">Vencendo em breve</div>
+                        <small style="color: #d97706; font-size: 0.72rem;">Validade &le; 30 dias</small>
                     </div>
                     <div class="stat-icon" style="background:#fef3c7; color:#d97706;">
                         <i data-lucide="calendar-alert"></i>
@@ -207,6 +288,7 @@
                             <option value="ok">Estoque OK</option>
                             <option value="baixo">Estoque Baixo</option>
                             <option value="esgotado">Esgotado</option>
+                            <option value="sem_giro">🧊 Capital Parado (+30d sem venda)</option>
                             <option value="vencendo">⚠️ Vencendo em 30 dias</option>
                             <option value="vencido">🛑 Já Vencido</option>
                         </select>
@@ -410,6 +492,46 @@
                         <input type="text" id="mov-motivo" placeholder="Ex: Reposição de estoque de fornecedor" required>
                     </div>
 
+                    <!-- Bloco Financeiro de Entrada / Compra (Opcional) -->
+                    <div id="mov-financeiro-box" style="margin-top: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.85rem;">
+                        <div class="form-row">
+                            <div class="form-group" style="margin-bottom: 0.5rem;">
+                                <label for="mov-custo-unitario">Custo Unitário da Compra (R$)</label>
+                                <input type="number" id="mov-custo-unitario" min="0" step="0.01" placeholder="0,00" oninput="updateMovementFinancials()">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0.5rem;">
+                                <label for="mov-custo-total">Custo Total da Compra (R$)</label>
+                                <input type="text" id="mov-custo-total" readonly style="background: #edf2f7; font-weight: 700; cursor: not-allowed;" value="R$ 0,00">
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #e2e8f0;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #1e3a5f;">
+                                <input type="checkbox" id="mov-gerar-despesa" onchange="toggleMovGerarDespesa()">
+                                <span>☑ Lançar automaticamente no Contas a Pagar do Financeiro</span>
+                            </label>
+                            
+                            <div id="mov-despesa-fields" style="display: none; margin-top: 0.75rem; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.75rem;">
+                                <div class="form-row">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="mov-despesa-vencimento">Data de Vencimento da Fatura <span class="text-danger">*</span></label>
+                                        <input type="date" id="mov-despesa-vencimento">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="mov-despesa-forma">Forma de Pagamento</label>
+                                        <select id="mov-despesa-forma">
+                                            <option value="Boleto">Boleto Bancário</option>
+                                            <option value="Pix">Pix</option>
+                                            <option value="Cartão de Crédito">Cartão de Crédito</option>
+                                            <option value="Transferência">Transferência / TED</option>
+                                            <option value="Dinheiro">Dinheiro</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Caixa de Prévia do Estoque -->
                     <div class="stock-preview-box">
                         <div class="stock-preview-item">
@@ -492,6 +614,9 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('modal-lista-compras')">Fechar</button>
+                <button type="button" class="btn btn-secondary" onclick="converterListaComprasEmPedido()" style="background:#f0f9ff; color:#0369a1; border-color:#bae6fd;">
+                    <i data-lucide="truck"></i> Gerar Pedido de Compra
+                </button>
                 <button type="button" class="btn btn-primary" onclick="copiarListaComprasTexto()">
                     <i data-lucide="copy"></i> Copiar Texto do Pedido
                 </button>
@@ -637,6 +762,498 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('modal-historico-movimentacoes')">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: BALANÇO / CONFERÊNCIA RÁPIDA DE INVENTÁRIO FÍSICO -->
+    <div class="modal-overlay" id="modal-balanco">
+        <div class="modal modal-lg" style="max-width: 850px;">
+            <div class="modal-header">
+                <h2>
+                    <i data-lucide="scale" style="color:var(--primary); width:20px; height:20px; vertical-align:middle; margin-right:4px;"></i>
+                    Balanço &amp; Conferência de Inventário Físico
+                </h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-balanco')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:var(--radius-sm); padding:0.85rem 1rem; margin-bottom:1rem; font-size:0.85rem; color:#0369a1;">
+                    <strong>Como funciona a conferência:</strong> Digite o estoque real contado nas prateleiras na coluna <em>Contagem Física</em>. O sistema calculará a diferença e gerará automaticamente os ajustes de inventário (perdas, quebras ou acertos).
+                </div>
+
+                <div class="search-bar" style="max-width: 320px; margin-bottom: 0.75rem;">
+                    <i data-lucide="search"></i>
+                    <input type="text" id="balanco-search-input" placeholder="Filtrar por nome ou SKU..." oninput="filtrarTabelaBalanco()">
+                </div>
+
+                <div class="table-container" style="max-height: 380px; overflow-y: auto; box-shadow:none; border:1px solid var(--border);">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>SKU</th>
+                                <th>Estoque Sistema</th>
+                                <th style="width: 140px;">Contagem Física</th>
+                                <th>Diferença</th>
+                            </tr>
+                        </thead>
+                        <tbody id="balanco-table-body">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+                <span id="balanco-resumo-divergencias" style="font-size:0.85rem; color:var(--text-secondary); font-weight:600;">
+                    0 divergências identificadas
+                </span>
+                <div style="display:flex; gap:0.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-balanco')">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="aplicarBalancoInventario()">
+                        <i data-lucide="check-check"></i> Aplicar Ajustes de Balanço
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: IMPORTAÇÃO E EXPORTAÇÃO DE PLANILHA CSV -->
+    <div class="modal-overlay" id="modal-import-export">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2>
+                    <i data-lucide="file-spreadsheet" style="color:var(--primary); width:20px; height:20px; vertical-align:middle; margin-right:4px;"></i>
+                    Importação e Exportação de Produtos (Planilhas CSV / Excel)
+                </h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-import-export')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="tabs mb-2" style="border-bottom: 2px solid var(--border-light); display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <button class="btn btn-secondary btn-sm" id="tab-btn-import" onclick="switchImportExportTab('import')" style="font-weight: 700; border-bottom: 2px solid var(--primary);">
+                        <i data-lucide="upload"></i> Importar Produtos (CSV)
+                    </button>
+                    <button class="btn btn-secondary btn-sm" id="tab-btn-export" onclick="switchImportExportTab('export')">
+                        <i data-lucide="download"></i> Exportar Estoque
+                    </button>
+                </div>
+
+                <!-- Painel 1: Importar -->
+                <div id="pane-import-produtos">
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:var(--radius-sm); padding:1rem; margin-bottom:1rem;">
+                        <h4 style="margin:0 0 0.5rem 0; font-size:0.95rem; color:var(--text-primary);">Passo 1: Baixar Planilha Modelo</h4>
+                        <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.75rem;">
+                            Utilize nossa planilha modelo CSV (compatível com Excel) com as colunas corretas (Nome, Categoria, SKU, Custo, Venda, Estoque, Minimo, Unidade, Fornecedor, Validade).
+                        </p>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="baixarModeloPlanilhaProdutos()">
+                            <i data-lucide="download"></i> Baixar Modelo de Exemplo (.CSV)
+                        </button>
+                    </div>
+
+                    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:var(--radius-sm); padding:1rem;">
+                        <h4 style="margin:0 0 0.5rem 0; font-size:0.95rem; color:var(--text-primary);">Passo 2: Selecionar o Arquivo CSV preenchido</h4>
+                        <input type="file" id="input-csv-produtos" accept=".csv,text/csv" class="form-control" style="margin-bottom:0.75rem;" onchange="handleCsvFileSelect(event)">
+                        
+                        <div style="margin-top:0.5rem;">
+                            <label style="font-size:0.85rem; color:var(--text-secondary); display:block; margin-bottom:0.35rem;">
+                                Ou cole o texto CSV diretamente aqui:
+                            </label>
+                            <textarea id="textarea-csv-produtos" rows="4" placeholder="Nome;Categoria;SKU;PrecoCusto;PrecoVenda;Estoque;EstoqueMinimo;Unidade;Fornecedor;Validade" style="width:100%; font-family:monospace; font-size:0.8rem; padding:0.5rem; border:1px solid var(--border); border-radius:4px;"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Painel 2: Exportar -->
+                <div id="pane-export-produtos" style="display:none;">
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:var(--radius-sm); padding:1.5rem; text-align:center;">
+                        <div style="width:54px; height:54px; border-radius:50%; background:#dcfce7; color:#16a34a; display:inline-flex; align-items:center; justify-content:center; margin-bottom:0.75rem;">
+                            <i data-lucide="file-spreadsheet" style="width:28px; height:28px;"></i>
+                        </div>
+                        <h3 style="font-size:1.15rem; margin-bottom:0.5rem; color:var(--text-primary);">Exportar Catálogo de Produtos e Saldo</h3>
+                        <p style="font-size:0.85rem; color:var(--text-secondary); max-width:480px; margin:0 auto 1.25rem auto;">
+                            Faça o download de todos os produtos do estoque com valores de custo, venda, margens calculadas, saldos e validades em formato CSV UTF-8 pronto para abrir perfeitamente no Excel.
+                        </p>
+                        <button type="button" class="btn btn-primary" onclick="exportarEstoqueCSV()" style="background:#16a34a; border-color:#16a34a;">
+                            <i data-lucide="download"></i> Baixar Planilha do Estoque (.CSV)
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" id="footer-import-produtos">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-import-export')">Fechar</button>
+                <button type="button" class="btn btn-primary" id="btn-confirm-import" onclick="processarImportacaoProdutosCSV()">
+                    <i data-lucide="upload"></i> Importar Produtos
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: GESTÃO DE PEDIDOS DE COMPRA, ESTOQUE EM TRÂNSITO E FORNECEDORES -->
+    <div class="modal-overlay" id="modal-pedidos-compra">
+        <div class="modal modal-lg" style="max-width: 950px;">
+            <div class="modal-header">
+                <div>
+                    <h2 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="truck" style="color:#0284c7; width:22px; height:22px;"></i>
+                        Pedidos de Compra &amp; Estoque a Caminho
+                    </h2>
+                    <p class="text-muted" style="margin: 3px 0 0 0; font-size: 0.8rem;">
+                        Controle de prazos de entrega, mercadorias em trânsito e contatos dos fornecedores
+                    </p>
+                </div>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-pedidos-compra')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Abas do Modal -->
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-light); margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button class="btn btn-secondary btn-sm" id="tab-pedidos-transito-btn" onclick="switchPedidosTab('transito')" style="font-weight: 700; border-bottom: 2px solid var(--primary);">
+                            <i data-lucide="clock"></i> Em Trânsito / A Caminho (<span id="count-tab-transito">0</span>)
+                        </button>
+                        <button class="btn btn-secondary btn-sm" id="tab-pedidos-recebidos-btn" onclick="switchPedidosTab('recebidos')">
+                            <i data-lucide="check-circle-2"></i> Recebidos / Histórico
+                        </button>
+                        <button class="btn btn-secondary btn-sm" id="tab-fornecedores-btn" onclick="switchPedidosTab('fornecedores')">
+                            <i data-lucide="users"></i> Contatos de Fornecedores
+                        </button>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary btn-sm" onclick="abrirModalNovoPedido()">
+                            <i data-lucide="plus"></i> Novo Pedido ao Fornecedor
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Painel 1: Pedidos em Trânsito -->
+                <div id="pane-pedidos-transito">
+                    <div class="table-container" style="max-height: 380px; overflow-y: auto; box-shadow:none; border:1px solid var(--border);">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Pedido</th>
+                                    <th>Fornecedor</th>
+                                    <th>Data Pedido</th>
+                                    <th>Prazo / Previsão</th>
+                                    <th>Status Entrega</th>
+                                    <th>Total Pedido</th>
+                                    <th style="text-align: right;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pedidos-transito-tbody">
+                                <!-- Preenchido dinamicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Painel 2: Pedidos Recebidos -->
+                <div id="pane-pedidos-recebidos" style="display: none;">
+                    <div class="table-container" style="max-height: 380px; overflow-y: auto; box-shadow:none; border:1px solid var(--border);">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Pedido</th>
+                                    <th>Fornecedor</th>
+                                    <th>Data Pedido</th>
+                                    <th>Recebido em</th>
+                                    <th>Itens Recebidos</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pedidos-recebidos-tbody">
+                                <!-- Preenchido dinamicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Painel 3: Contatos de Fornecedores -->
+                <div id="pane-fornecedores" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">
+                            Distribuidoras parceiras e contatos diretos dos representantes comerciais
+                        </span>
+                        <button class="btn btn-secondary btn-sm" onclick="abrirModalNovoFornecedor()">
+                            <i data-lucide="user-plus"></i> + Novo Fornecedor
+                        </button>
+                    </div>
+                    <div class="table-container" style="max-height: 360px; overflow-y: auto; box-shadow:none; border:1px solid var(--border);">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Distribuidora</th>
+                                    <th>Representante</th>
+                                    <th>WhatsApp / Fone</th>
+                                    <th>Prazo Médio</th>
+                                    <th>Categorias</th>
+                                    <th style="text-align: right;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fornecedores-tbody">
+                                <!-- Preenchido dinamicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-pedidos-compra')">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: NOVO PEDIDO AO FORNECEDOR -->
+    <div class="modal-overlay" id="modal-novo-pedido">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2>
+                    <i data-lucide="shopping-bag" style="color:var(--primary); width:20px; height:20px; vertical-align:middle; margin-right:4px;"></i>
+                    Novo Pedido de Compra / Reposição
+                </h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-novo-pedido')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-novo-pedido" onsubmit="event.preventDefault(); salvarNovoPedido();">
+                    <!-- Linha 1: Fornecedor, Data e Prazo -->
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label for="novo-ped-fornecedor">Fornecedor / Distribuidora <span class="text-danger">*</span></label>
+                            <select id="novo-ped-fornecedor" required onchange="onPedidoFornecedorChange()">
+                                <!-- Preenchido dinamicamente -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="novo-ped-data">Data do Pedido <span class="text-danger">*</span></label>
+                            <input type="date" id="novo-ped-data" required onchange="calcularPrevisaoEntregaPedido()">
+                        </div>
+                        <div class="form-group">
+                            <label for="novo-ped-prazo-dias">Prazo de Entrega (dias) <span class="text-danger">*</span></label>
+                            <input type="number" id="novo-ped-prazo-dias" min="1" max="90" value="10" required oninput="calcularPrevisaoEntregaPedido()">
+                        </div>
+                    </div>
+
+                    <!-- Linha 2: Previsão e Contato -->
+                    <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:var(--radius-sm); padding:0.75rem 1rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                        <div>
+                            <span style="font-size:0.8rem; color:#0369a1; font-weight:600;">Data Prevista de Chegada:</span>
+                            <div style="font-size:1.1rem; font-weight:700; color:#0284c7;" id="novo-ped-previsao-badge">--/--/---- (em 10 dias)</div>
+                        </div>
+                        <div id="novo-ped-rep-info" style="font-size:0.85rem; color:#0369a1;">
+                            Representante: <strong id="novo-ped-rep-nome">-</strong> | Fone: <span id="novo-ped-rep-fone">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Seção de Adicionar Itens ao Pedido -->
+                    <div style="border:1px solid var(--border); border-radius:var(--radius-sm); padding:1rem; margin-bottom:1rem; background:var(--bg);">
+                        <h4 style="margin:0 0 0.75rem 0; font-size:0.95rem; color:var(--text-primary); display:flex; justify-content:space-between;">
+                            <span>Itens da Carga Encomendada</span>
+                            <span style="font-size:0.8rem; color:var(--text-secondary); font-weight:normal;">Esses itens ficarão marcados como "a caminho" no estoque</span>
+                        </h4>
+
+                        <div class="form-row-3" style="align-items:flex-end;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="novo-ped-add-produto">Selecionar Produto</label>
+                                <select id="novo-ped-add-produto" onchange="onPedidoItemProdutoChange()">
+                                    <!-- Preenchido dinamicamente -->
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="novo-ped-add-qtd">Quantidade</label>
+                                <input type="number" id="novo-ped-add-qtd" min="1" value="5">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="novo-ped-add-custo">Custo Unitário (R$)</label>
+                                <div style="display:flex; gap:0.5rem;">
+                                    <input type="number" id="novo-ped-add-custo" min="0" step="0.01" placeholder="0,00">
+                                    <button type="button" class="btn btn-primary" onclick="adicionarItemAoPedido()">
+                                        <i data-lucide="plus"></i> Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tabela de Itens Adicionados -->
+                        <div class="table-container" style="max-height: 180px; overflow-y: auto; box-shadow:none; border:1px solid var(--border-light); margin-top:0.75rem;">
+                            <table class="data-table" style="font-size:0.85rem;">
+                                <thead>
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th>Qtd</th>
+                                        <th>Custo Unit.</th>
+                                        <th>Subtotal</th>
+                                        <th style="text-align:right;">Remover</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="novo-ped-itens-tbody">
+                                    <tr>
+                                        <td colspan="5" style="text-align:center; color:var(--text-secondary); padding:1rem;">Nenhum item adicionado ainda</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div style="display:flex; justify-content:flex-end; align-items:center; margin-top:0.75rem; gap:1rem;">
+                            <span style="font-size:0.9rem; color:var(--text-secondary);">Total do Pedido:</span>
+                            <span style="font-size:1.25rem; font-weight:700; color:#1e1b4b;" id="novo-ped-total-display">R$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="novo-ped-forma-pagamento">Condição de Pagamento Acordada</label>
+                            <input type="text" id="novo-ped-forma-pagamento" placeholder="Ex: Boleto 28 dias / Pix à vista">
+                        </div>
+                        <div class="form-group">
+                            <label for="novo-ped-obs">Observações / Instruções</label>
+                            <input type="text" id="novo-ped-obs" placeholder="Ex: Entregar pela manhã; Carga frágil">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-novo-pedido')">Cancelar</button>
+                <button type="button" class="btn btn-whatsapp" onclick="salvarNovoPedido(true)">
+                    <i data-lucide="message-circle"></i> Salvar e Enviar no WhatsApp
+                </button>
+                <button type="button" class="btn btn-primary" onclick="salvarNovoPedido(false)">
+                    <i data-lucide="check"></i> Confirmar Pedido
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: RECEBER MERCADORIA / CHECK-IN DE CARGA -->
+    <div class="modal-overlay" id="modal-receber-pedido">
+        <div class="modal modal-md">
+            <div class="modal-header">
+                <h2>
+                    <i data-lucide="package-check" style="color:var(--success); width:20px; height:20px; vertical-align:middle; margin-right:4px;"></i>
+                    Receber Mercadoria &amp; Dar Entrada no Estoque
+                </h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-receber-pedido')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:var(--radius-sm); padding:0.85rem 1rem; margin-bottom:1rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong style="color:#15803d; font-size:1rem;" id="rec-ped-numero">PED-102</strong>
+                            <div style="font-size:0.82rem; color:#166534;" id="rec-ped-fornecedor">Fornecedor: VetFarma</div>
+                        </div>
+                        <span class="badge badge-success">Chegada da Carga</span>
+                    </div>
+                </div>
+
+                <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.75rem;">
+                    Confira as quantidades físicas descarregadas e informe a data de validade do novo lote recebido:
+                </p>
+
+                <div class="table-container" style="max-height: 220px; overflow-y: auto; box-shadow:none; border:1px solid var(--border); margin-bottom:1rem;">
+                    <table class="data-table" style="font-size:0.85rem;">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Qtd Pedida</th>
+                                <th style="width:110px;">Qtd Entregue</th>
+                                <th style="width:130px;">Nova Validade</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rec-ped-itens-tbody">
+                            <!-- Injetado dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Lançamento no Contas a Pagar -->
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:var(--radius-sm); padding:0.85rem;">
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.85rem; font-weight:600; color:#1e3a5f;">
+                        <input type="checkbox" id="rec-ped-gerar-despesa" checked onchange="toggleRecPedDespesa()">
+                        <span>☑ Lançar boleto/fatura automaticamente no Contas a Pagar</span>
+                    </label>
+
+                    <div id="rec-ped-despesa-fields" style="margin-top:0.65rem; padding-top:0.65rem; border-top:1px solid #e2e8f0;">
+                        <div class="form-row">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="rec-ped-vencimento">Vencimento da Fatura <span class="text-danger">*</span></label>
+                                <input type="date" id="rec-ped-vencimento">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="rec-ped-forma">Forma de Pagamento</label>
+                                <select id="rec-ped-forma">
+                                    <option value="Boleto">Boleto Bancário</option>
+                                    <option value="Pix">Pix</option>
+                                    <option value="Transferência">Transferência / TED</option>
+                                    <option value="Cartão de Crédito">Cartão de Crédito</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-receber-pedido')">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="confirmarRecebimentoCarga()" style="background:#16a34a; border-color:#16a34a;">
+                    <i data-lucide="check-circle"></i> Confirmar Entrada no Estoque
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: NOVO / EDITAR FORNECEDOR -->
+    <div class="modal-overlay" id="modal-novo-fornecedor">
+        <div class="modal modal-md">
+            <div class="modal-header">
+                <h2 id="forn-modal-title">Novo Fornecedor / Distribuidora</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-novo-fornecedor')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-novo-fornecedor" onsubmit="event.preventDefault(); salvarFornecedor();">
+                    <input type="hidden" id="forn-id">
+                    <div class="form-group">
+                        <label for="forn-nome">Razão Social / Nome da Distribuidora <span class="text-danger">*</span></label>
+                        <input type="text" id="forn-nome" placeholder="Ex: Distribuidora PetFood Brasil" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="forn-contato">Nome do Representante Comercial</label>
+                            <input type="text" id="forn-contato" placeholder="Ex: Carlos Silva">
+                        </div>
+                        <div class="form-group">
+                            <label for="forn-telefone">WhatsApp / Telefone <span class="text-danger">*</span></label>
+                            <input type="text" id="forn-telefone" placeholder="Ex: (11) 98765-4321" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="forn-prazo">Prazo Médio de Entrega (dias)</label>
+                            <input type="number" id="forn-prazo" min="1" max="90" value="7">
+                        </div>
+                        <div class="form-group">
+                            <label for="forn-categorias">Linhas / Categorias Atendidas</label>
+                            <input type="text" id="forn-categorias" placeholder="Ex: Rações, Medicamentos">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="forn-obs">Observações / Chave Pix / Condições</label>
+                        <input type="text" id="forn-obs" placeholder="Ex: Pedido mínimo R$ 400; Chave Pix CNPJ...">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-novo-fornecedor')">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarFornecedor()">
+                    <i data-lucide="check"></i> Salvar Fornecedor
+                </button>
             </div>
         </div>
     </div>
