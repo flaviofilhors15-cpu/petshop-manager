@@ -470,6 +470,9 @@
                         <p style="color:var(--adm-text-muted); font-size:0.88rem; margin:0;">Métricas em tempo real de receita, ciclo de vida das lojas e expansão da plataforma.</p>
                     </div>
                     <div style="display:flex; gap:8px;">
+                        <button class="btn btn-secondary btn-sm" onclick="zerarDadosFicticiosDoPainel()" style="color:#ef4444; border-color:rgba(239,68,68,0.3);">
+                            <i data-lucide="trash-2"></i> Zerar Dados Fictícios
+                        </button>
                         <button class="btn btn-secondary btn-sm" onclick="exportarRelatorioSaaSCsv()">
                             <i data-lucide="download"></i> Exportar Métricas (CSV)
                         </button>
@@ -593,7 +596,8 @@
                         <div style="flex:1; min-width:140px;">
                             <select id="filtro-status-loja" class="form-control" style="background:var(--adm-bg); border-color:var(--adm-border); color:var(--adm-text);" onchange="renderizarTabelaLojas()">
                                 <option value="">Todos os Status</option>
-                                <option value="active">🟢 Ativas</option>
+                                <option value="pending">🟠 Aguardando Aprovação (Novas)</option>
+                                <option value="active">🟢 Ativas (Liberadas)</option>
                                 <option value="trial">🟡 Em Teste (Trial)</option>
                                 <option value="suspended">🔴 Suspensas/Bloqueadas</option>
                                 <option value="cancelled">⚪ Canceladas</option>

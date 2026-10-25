@@ -934,11 +934,7 @@ window.configurarContatosDev = configurarContatosDev;
 // === Painel SuperAdmin / Dono da Plataforma (Área Secreta & Protegida) ===
 function abrirPainelSuperAdmin(pularSenha = false) {
     if (!pularSenha) {
-        let masterKeyCadastrada = localStorage.getItem('ps_master_key');
-        if (!masterKeyCadastrada || masterKeyCadastrada === 'admin2026') {
-            masterKeyCadastrada = 'Ma15072019$';
-            localStorage.setItem('ps_master_key', masterKeyCadastrada);
-        }
+        let masterKeyCadastrada = localStorage.getItem('ps_master_key') || 'Ma15072019$';
         const senhaDigitada = prompt('🔒 Acesso Restrito do Dono da Plataforma (Flávio Filho)\n\nDigite a Chave Mestra / Senha do SuperAdmin:');
         if (!senhaDigitada) return;
         if (senhaDigitada !== masterKeyCadastrada) {
@@ -947,141 +943,10 @@ function abrirPainelSuperAdmin(pularSenha = false) {
         }
     }
 
-    let tenants = [];
-    try {
-        tenants = JSON.parse(localStorage.getItem('ps_tenants') || '[]');
-    } catch {
-        tenants = [];
-    }
-
-    const activeTenantId = getActiveTenantId();
-    let modal = document.getElementById('modal-superadmin');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'modal-superadmin';
-        modal.className = 'modal-overlay';
-        document.body.appendChild(modal);
-    }
-
-    // Calcular estatísticas globais somando todos os tenants
-    let totalClientesSaaS = 0;
-    let totalPetsSaaS = 0;
-    tenants.forEach(t => {
-        try {
-            const cls = JSON.parse(localStorage.getItem(`ps_${STORAGE_KEYS.CLIENTS}_${t.id}`) || '[]');
-            totalClientesSaaS += cls.length;
-            const pts = JSON.parse(localStorage.getItem(`ps_${STORAGE_KEYS.PETS}_${t.id}`) || '[]');
-            totalPetsSaaS += pts.length;
-        } catch {}
-    });
-
-    const linhasTenants = tenants.map(t => {
-        const isAtual = t.id === activeTenantId;
-        const dataFormatada = t.dataCriacao ? new Date(t.dataCriacao).toLocaleDateString('pt-BR') : '-';
-        return `
-            <tr>
-                <td>
-                    <div style="font-weight:600; color:#1e293b; display:flex; align-items:center; gap:6px;">
-                        <span>${escapeHtml(t.nomePetShop)}</span>
-                        ${isAtual ? '<span class="badge badge-success" style="font-size:0.68rem;">Loja Conectada</span>' : ''}
-                    </div>
-                    <div style="font-size:0.75rem; color:#64748b;">ID: <code>${escapeHtml(t.id)}</code></div>
-                </td>
-                <td>
-                    <div style="font-weight:500;">${escapeHtml(t.responsavel || '-')}</div>
-                    <div style="font-size:0.75rem; color:#64748b;">${escapeHtml(t.email || '-')}</div>
-                </td>
-                <td>
-                    <div style="font-size:0.85rem;">${escapeHtml(t.telefone || '-')}</div>
-                </td>
-                <td style="font-size:0.82rem; color:#64748b;">${escapeHtml(dataFormatada)}</td>
-                <td style="text-align:right;">
-                    <div style="display:flex; justify-content:flex-end; gap:0.4rem;">
-                        ${!isAtual ? `
-                            <button class="btn btn-sm btn-primary" onclick="acessarTenantComoDono('${escapeHtml(t.id)}')" style="font-size:0.75rem; padding:4px 8px;" title="Entrar no painel desta loja">
-                                <i data-lucide="log-in"></i> Acessar
-                            </button>
-                        ` : ''}
-                        <button class="btn btn-sm btn-secondary text-danger" onclick="excluirTenantComoDono('${escapeHtml(t.id)}', '${escapeHtml(t.nomePetShop)}')" style="font-size:0.75rem; padding:4px 8px; border-color:#fecdd3;" title="Remover loja do sistema">
-                            <i data-lucide="trash-2"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
-
-    modal.innerHTML = `
-        <div class="modal modal-lg" style="max-height:90vh;">
-            <div class="modal-header" style="background:#fffbeb; border-bottom:1px solid #fef3c7;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="font-size:1.4rem;">👑</span>
-                    <div>
-                        <h2 style="font-size:1.15rem; color:#92400e; margin:0;">Painel do Dono da Plataforma (SaaS SuperAdmin)</h2>
-                        <span style="font-size:0.78rem; color:#b45309; font-weight:500;">Visão Master de Todos os Pet Shops Cadastrados</span>
-                    </div>
-                </div>
-                <button class="btn-icon modal-close" onclick="closeModal('modal-superadmin')">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-            <div class="modal-body" style="padding:1.5rem;">
-                <!-- KPIs Master -->
-                <div class="grid-3" style="grid-template-columns:repeat(3, 1fr); gap:1rem; margin-bottom:1.5rem;">
-                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:1rem; text-align:center;">
-                        <div style="font-size:1.6rem; font-weight:700; color:#1e3a5f;">${tenants.length}</div>
-                        <div style="font-size:0.8rem; color:#64748b; font-weight:600; text-transform:uppercase;">Pet Shops Cadastrados</div>
-                    </div>
-                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:1rem; text-align:center;">
-                        <div style="font-size:1.6rem; font-weight:700; color:#16a34a;">${totalClientesSaaS}</div>
-                        <div style="font-size:0.8rem; color:#64748b; font-weight:600; text-transform:uppercase;">Tutores na Plataforma</div>
-                    </div>
-                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:1rem; text-align:center;">
-                        <div style="font-size:1.6rem; font-weight:700; color:#3b82f6;">${totalPetsSaaS}</div>
-                        <div style="font-size:0.8rem; color:#64748b; font-weight:600; text-transform:uppercase;">Pets Gerenciados</div>
-                    </div>
-                </div>
-
-                <!-- Tabela de Lojas -->
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-                    <h3 style="font-size:0.95rem; color:#1e293b; margin:0; display:flex; align-items:center; gap:6px;">
-                        <i data-lucide="store" style="width:16px;height:16px;color:#1e3a5f;"></i>
-                        Lojas Registradas no SaaS (${tenants.length})
-                    </h3>
-                </div>
-
-                <div style="overflow-x:auto; border:1px solid var(--border); border-radius:8px; max-height:280px;">
-                    <table class="data-table" style="font-size:0.82rem;">
-                        <thead style="position:sticky; top:0; background:#f8fafc; z-index:1;">
-                            <tr>
-                                <th>Pet Shop</th>
-                                <th>Responsável</th>
-                                <th>WhatsApp</th>
-                                <th>Data Cadastro</th>
-                                <th style="text-align:right;">Ações do Dono</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${linhasTenants || '<tr><td colspan="5" style="text-align:center; padding:1.5rem;">Nenhum Pet Shop cadastrado.</td></tr>'}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer" style="background:#fafafa; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
-                <div style="font-size:0.78rem; color:#64748b; display:flex; align-items:center; gap:10px;">
-                    <span>🛡️ Ambiente Master • Acesso Exclusivo do Dono</span>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="alterarChaveMestraDono()" style="font-size:0.75rem; padding:3px 8px;">
-                        <i data-lucide="key" style="width:12px;height:12px;"></i> Alterar Chave Mestra
-                    </button>
-                </div>
-                <button type="button" class="btn btn-secondary" onclick="fecharPainelSuperAdmin()">Fechar</button>
-            </div>
-        </div>
-    `;
-
-    openModal('modal-superadmin');
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    // Redireciona diretamente para a tela preta executiva do Super Admin
+    window.location.href = 'admin.html';
 }
+window.abrirPainelSuperAdmin = abrirPainelSuperAdmin;
 window.abrirPainelSuperAdmin = abrirPainelSuperAdmin;
 
 function fecharPainelSuperAdmin() {
@@ -1236,6 +1101,9 @@ function initSidebar() {
         </div>
         <nav class="sidebar-nav">${navHtml}</nav>
         <div class="sidebar-footer" style="display:flex; flex-direction:column; gap:0.45rem; padding: 1rem 1.25rem;">
+            <button class="btn btn-primary btn-sm" style="width:100%; justify-content:center; background:linear-gradient(135deg, #f59e0b, #d97706); border:none; font-weight:700; font-size:0.8rem; box-shadow:0 2px 8px rgba(245,158,11,0.3);" onclick="window.location.href='admin.html'" title="Acessar Central do Dono do SaaS">
+                <i data-lucide="crown" style="width:14px;height:14px;"></i> Painel Super Admin
+            </button>
             <button class="btn btn-secondary btn-sm" style="width:100%; justify-content:center; color:#f87171; border-color:rgba(255,255,255,0.15); background:rgba(255,255,255,0.05);" onclick="fazerLogout()" title="Sair do Pet Shop atual">
                 <i data-lucide="log-out" style="width:14px;height:14px;"></i> Sair / Trocar Loja
             </button>

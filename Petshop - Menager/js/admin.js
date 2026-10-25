@@ -77,186 +77,56 @@
     }
 
     // ==========================================
-    // 3. SEED INICIAL COM DADOS REALISTAS DE PETSHOPS
+    // 3. BASE REAL LIMPA (SEM DADOS FICTÍCIOS)
     // ==========================================
     function inicializarDadosSaasSeNecessario() {
-        const tenantsSalvos = localStorage.getItem(SAAS_STORAGE.TENANTS);
-        if (!tenantsSalvos || JSON.parse(tenantsSalvos).length === 0) {
-            const seedTenants = [
-                {
-                    id: 'ten_001',
-                    nome: 'Pet & Cia Centro Veterinário',
-                    responsavel: 'Dra. Camila Nogueira',
-                    telefone: '(34) 99876-5432',
-                    email: 'camila@petciacentro.com.br',
-                    cidade: 'Uberlândia - MG',
-                    plano: 'pro',
-                    status: 'active',
-                    criadoEm: '2026-06-15T10:30:00Z',
-                    ultimoAcesso: '2026-10-24T18:40:00Z',
-                    tutoresCount: 342,
-                    petsCount: 489,
-                    agendamentosCount: 1240,
-                    notas: [
-                        { autor: 'Flávio Filho', texto: 'Migrou do plano Básico para o Pro após 3 meses. Ótima cliente.', data: '2026-09-10 14:20' }
-                    ]
-                },
-                {
-                    id: 'ten_002',
-                    nome: 'Bicho Mimado Spa Pet',
-                    responsavel: 'Lucas Rodrigues',
-                    telefone: '(11) 98765-1122',
-                    email: 'lucas@bichomimadospa.com.br',
-                    cidade: 'São Paulo - SP',
-                    plano: 'premium',
-                    status: 'active',
-                    criadoEm: '2026-07-02T14:00:00Z',
-                    ultimoAcesso: '2026-10-24T17:15:00Z',
-                    tutoresCount: 680,
-                    petsCount: 940,
-                    agendamentosCount: 2890,
-                    notas: [
-                        { autor: 'Flávio Filho', texto: 'Grande volume de banho e tosa. Solicitou integração direta com maquininha.', data: '2026-08-01 11:00' }
-                    ]
-                },
-                {
-                    id: 'ten_003',
-                    nome: 'AuMigos Pet Shop & Boutique',
-                    responsavel: 'Patrícia Albuquerque',
-                    telefone: '(31) 99344-5566',
-                    email: 'patricia@aumigospet.com',
-                    cidade: 'Belo Horizonte - MG',
-                    plano: 'pro',
-                    status: 'trial',
-                    criadoEm: '2026-10-16T09:00:00Z',
-                    trialExpiraEm: '2026-10-30T23:59:59Z',
-                    ultimoAcesso: '2026-10-23T11:20:00Z',
-                    tutoresCount: 45,
-                    petsCount: 58,
-                    agendamentosCount: 88,
-                    notas: [
-                        { autor: 'Flávio Filho', texto: 'Em período de teste gratuito de 14 dias. Contatar via WhatsApp na próxima terça.', data: '2026-10-18 16:30' }
-                    ]
-                },
-                {
-                    id: 'ten_004',
-                    nome: 'Pet Mania Estética Animal',
-                    responsavel: 'Renato Meireles',
-                    telefone: '(21) 97654-3321',
-                    email: 'renato@petmaniarj.com',
-                    cidade: 'Niterói - RJ',
-                    plano: 'basico',
-                    status: 'suspended',
-                    criadoEm: '2026-05-10T16:00:00Z',
-                    ultimoAcesso: '2026-10-12T09:10:00Z',
-                    tutoresCount: 110,
-                    petsCount: 145,
-                    agendamentosCount: 320,
-                    notas: [
-                        { autor: 'Flávio Filho', texto: 'Acesso suspenso por fatura vencida há 8 dias (Asaas). Aguardando comprovante Pix.', data: '2026-10-20 09:15' }
-                    ]
-                },
-                {
-                    id: 'ten_005',
-                    nome: 'Patinhas & Bigodes Banho e Tosa',
-                    responsavel: 'Fernanda Diniz',
-                    telefone: '(41) 99123-8877',
-                    email: 'fernanda@patinhasbigodes.com.br',
-                    cidade: 'Curitiba - PR',
-                    plano: 'pro',
-                    status: 'active',
-                    criadoEm: '2026-08-20T11:30:00Z',
-                    ultimoAcesso: '2026-10-24T15:45:00Z',
-                    tutoresCount: 215,
-                    petsCount: 310,
-                    agendamentosCount: 780,
-                    notas: []
-                },
-                {
-                    id: 'ten_006',
-                    nome: 'Recanto dos Bichos Pet Care',
-                    responsavel: 'Rodrigo Antunes',
-                    telefone: '(19) 98877-4433',
-                    email: 'rodrigo@recantodosbichos.com',
-                    cidade: 'Campinas - SP',
-                    plano: 'basico',
-                    status: 'trial',
-                    criadoEm: '2026-10-21T08:15:00Z',
-                    trialExpiraEm: '2026-11-04T23:59:59Z',
-                    ultimoAcesso: '2026-10-24T10:00:00Z',
-                    tutoresCount: 18,
-                    petsCount: 22,
-                    agendamentosCount: 31,
-                    notas: []
-                }
-            ];
-            localStorage.setItem(SAAS_STORAGE.TENANTS, JSON.stringify(seedTenants));
+        // Se ainda não existir ou tiver dados fictícios, sincroniza apenas com os pet shops cadastrados de verdade
+        let tenantsReais = [];
+        try {
+            const rawTenants = JSON.parse(localStorage.getItem('ps_tenants') || '[]');
+            // Filtrar apenas cadastros reais (ignora demo se quiser, ou mantém limpo)
+            tenantsReais = rawTenants.map(t => ({
+                id: t.id,
+                nome: t.nomePetShop || t.nome || 'Pet Shop',
+                responsavel: t.responsavel || 'Administrador',
+                telefone: t.telefone || '-',
+                email: t.email || '-',
+                cidade: t.cidade || 'Não informada',
+                plano: t.plano || 'pro',
+                status: t.status || (t.isMasterOwner ? 'active' : 'pending'),
+                criadoEm: t.dataCriacao || new Date().toISOString(),
+                ultimoAcesso: new Date().toISOString(),
+                tutoresCount: 0,
+                petsCount: 0,
+                agendamentosCount: 0,
+                notas: []
+            }));
+        } catch (e) {
+            tenantsReais = [];
         }
 
-        // Faturas Iniciais
+        // Salvar base 100% limpa e real
+        localStorage.setItem(SAAS_STORAGE.TENANTS, JSON.stringify(tenantsReais));
+
         if (!localStorage.getItem(SAAS_STORAGE.INVOICES)) {
-            const seedInvoices = [
-                { id: 'inv_101', tenantId: 'ten_001', lojaNome: 'Pet & Cia Centro Veterinário', plano: 'pro', valor: 149.90, vencimento: '2026-10-15', status: 'pago', forma: 'Pix (Asaas)' },
-                { id: 'inv_102', tenantId: 'ten_002', lojaNome: 'Bicho Mimado Spa Pet', plano: 'premium', valor: 249.90, vencimento: '2026-10-10', status: 'pago', forma: 'Cartão de Crédito' },
-                { id: 'inv_103', tenantId: 'ten_004', lojaNome: 'Pet Mania Estética Animal', plano: 'basico', valor: 89.90, vencimento: '2026-10-12', status: 'atrasado', forma: 'Boleto Bancário' },
-                { id: 'inv_104', tenantId: 'ten_005', lojaNome: 'Patinhas & Bigodes Banho e Tosa', plano: 'pro', valor: 149.90, vencimento: '2026-10-20', status: 'pago', forma: 'Pix Automático' },
-                { id: 'inv_105', tenantId: 'ten_001', lojaNome: 'Pet & Cia Centro Veterinário', plano: 'pro', valor: 149.90, vencimento: '2026-11-15', status: 'pendente', forma: 'Pix (Asaas)' }
-            ];
-            localStorage.setItem(SAAS_STORAGE.INVOICES, JSON.stringify(seedInvoices));
+            localStorage.setItem(SAAS_STORAGE.INVOICES, JSON.stringify([]));
         }
 
-        // Avisos Iniciais
         if (!localStorage.getItem(SAAS_STORAGE.ANNOUNCEMENTS)) {
-            const seedAnnouncements = [
-                {
-                    id: 'aviso_01',
-                    titulo: 'Novos Relatórios de Lucro Líquido e DRE Disponíveis!',
-                    tipo: 'novidade',
-                    publico: 'Todas as Lojas',
-                    data: '2026-10-22',
-                    status: 'ativo'
-                },
-                {
-                    id: 'aviso_02',
-                    titulo: 'Janela de Manutenção Programada de Servidores (Madrugada às 03:00)',
-                    tipo: 'manutencao',
-                    publico: 'Todas as Lojas',
-                    data: '2026-10-19',
-                    status: 'concluido'
-                }
-            ];
-            localStorage.setItem(SAAS_STORAGE.ANNOUNCEMENTS, JSON.stringify(seedAnnouncements));
+            localStorage.setItem(SAAS_STORAGE.ANNOUNCEMENTS, JSON.stringify([]));
         }
 
-        // Logs de Auditoria Iniciais
         if (!localStorage.getItem(SAAS_STORAGE.AUDIT_LOGS)) {
-            const seedAudit = [
+            localStorage.setItem(SAAS_STORAGE.AUDIT_LOGS, JSON.stringify([
                 {
-                    id: 'log_01',
-                    data: '2026-10-20 09:15:30',
-                    acao: 'SUSPENSAO_INADIMPLENCIA',
-                    loja: 'Pet Mania Estética Animal',
+                    id: 'log_init',
+                    data: new Date().toLocaleString('pt-BR'),
+                    acao: 'SISTEMA_INICIALIZADO',
+                    loja: 'Global / Plataforma',
                     autor: 'Flávio Filho (Super Admin)',
-                    motivo: 'Fatura de Outubro em atraso há mais de 8 dias sem retorno de contato.'
-                },
-                {
-                    id: 'log_02',
-                    data: '2026-10-18 16:30:12',
-                    acao: 'EXTENSAO_TRIAL',
-                    loja: 'AuMigos Pet Shop & Boutique',
-                    autor: 'Flávio Filho (Super Admin)',
-                    motivo: 'Solicitou mais 7 dias para concluir cadastro do catálogo de produtos.'
-                },
-                {
-                    id: 'log_03',
-                    data: '2026-10-15 10:05:44',
-                    acao: 'LIBERACAO_ACESSO',
-                    loja: 'Pet & Cia Centro Veterinário',
-                    autor: 'Sistema Autônomo (Asaas Webhook)',
-                    motivo: 'Confirmação instantânea de pagamento via Pix.'
+                    motivo: 'Base do SaaS limpa e pronta para receber clientes reais.'
                 }
-            ];
-            localStorage.setItem(SAAS_STORAGE.AUDIT_LOGS, JSON.stringify(seedAudit));
+            ]));
         }
     }
 
@@ -569,10 +439,11 @@
 
         tbody.innerHTML = listaFiltrada.map(loja => {
             const statusConfig = {
-                active: { label: 'Ativa', class: 'status-active' },
-                trial: { label: 'Trial Grátis', class: 'status-trial' },
-                suspended: { label: 'Suspensa / Bloqueada', class: 'status-suspended' },
-                cancelled: { label: 'Cancelada', class: 'status-cancelled' }
+                pending: { label: '🟠 Aguardando Aprovação', class: 'status-trial' },
+                active: { label: '🟢 Ativa', class: 'status-active' },
+                trial: { label: '🟡 Em Teste (Trial)', class: 'status-trial' },
+                suspended: { label: '🔴 Suspensa / Bloqueada', class: 'status-suspended' },
+                cancelled: { label: '⚪ Cancelada', class: 'status-cancelled' }
             }[loja.status] || { label: loja.status, class: 'status-trial' };
 
             const planoLabel = {
@@ -1276,6 +1147,23 @@
         calcularMetricasSaaS();
         window.renderizarTabelaLojas();
         if (typeof showToast === 'function') showToast('Métricas e telemetria atualizadas!', 'info');
+    };
+
+    window.zerarDadosFicticiosDoPainel = function () {
+        if (!confirm('⚠️ Tem certeza que deseja remover todos os dados fictícios de exemplo?\n\nO painel ficará zerado, exibindo apenas as lojas que realmente forem cadastradas por clientes.')) return;
+        localStorage.removeItem(SAAS_STORAGE.TENANTS);
+        localStorage.removeItem(SAAS_STORAGE.INVOICES);
+        localStorage.removeItem(SAAS_STORAGE.ANNOUNCEMENTS);
+        localStorage.removeItem(SAAS_STORAGE.AUDIT_LOGS);
+        inicializarDadosSaasSeNecessario();
+        carregarDados();
+        calcularMetricasSaaS();
+        window.renderizarTabelaLojas();
+        renderizarFaturas();
+        renderizarTelemetriaRankings();
+        renderizarAvisos();
+        renderizarAuditoria();
+        alert('✅ Pronto! Base de dados limpa. O painel agora registrará somente clientes reais.');
     };
 
     // ==========================================

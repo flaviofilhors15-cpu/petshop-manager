@@ -206,12 +206,35 @@ async function handleLoginSubmit(event) {
         showToast('👑 Bem-vindo, Flávio Filho! Abrindo o Painel Master do Dono...', 'success');
 
         setTimeout(() => {
-            if (typeof abrirPainelSuperAdmin === 'function') {
-                abrirPainelSuperAdmin(true);
-            } else {
-                window.location.href = 'index.html';
-            }
+            window.location.href = 'admin.html';
         }, 500);
+        return;
+    }
+
+    // Verificar se a loja ainda está pendente de aprovação manual pelo Dono
+    let statusAtual = tenant.status || 'active';
+    try {
+        const saasTenants = JSON.parse(localStorage.getItem('ps_saas_tenants') || '[]');
+        const st = saasTenants.find(x => x.id === tenant.id);
+        if (st) statusAtual = st.status;
+    } catch (e) {}
+
+    if (statusAtual === 'pending') {
+        localStorage.removeItem('ps_current_tenant_id');
+        localStorage.removeItem('ps_current_tenant_name');
+        alert(
+            `⏳ CONTA AGUARDANDO APROVAÇÃO MANUAL\n\n` +
+            `Olá, ${tenant.responsavel}!\n` +
+            `O seu cadastro no PetShop Manager foi recebido e está aguardando liberação pelo administrador.\n\n` +
+            `Entre em contato com Flávio Filho pelo WhatsApp (34) 99983-6438 para ativação imediata.`
+        );
+        return;
+    }
+
+    if (statusAtual === 'suspended') {
+        localStorage.removeItem('ps_current_tenant_id');
+        localStorage.removeItem('ps_current_tenant_name');
+        alert('🔒 ACESSO SUSPENSO: Esta conta está temporariamente suspensa por pendência de assinatura. Fale com Flávio Filho no WhatsApp (34) 99983-6438.');
         return;
     }
 
@@ -297,15 +320,37 @@ async function handleCadastroSubmit(event) {
         email,
         passwordHash,
         salt,
+        status: 'pending', // Opção 1: Bloqueado aguardando aprovação manual do Dono
+        plano: 'pro',
         dataCriacao: new Date().toISOString()
     };
 
     tenants.push(novoTenant);
     localStorage.setItem('ps_tenants', JSON.stringify(tenants));
 
-    // Definir imediatamente como tenant ativo
-    localStorage.setItem('ps_current_tenant_id', novoTenantId);
-    localStorage.setItem('ps_current_tenant_name', nomePetShop);
+    // Sincronizar com o banco do Super Admin (ps_saas_tenants)
+    try {
+        let saasTenants = JSON.parse(localStorage.getItem('ps_saas_tenants') || '[]');
+        saasTenants.unshift({
+            id: novoTenantId,
+            nome: nomePetShop,
+            responsavel: responsavel,
+            telefone: telefone,
+            email: email,
+            cidade: 'Aguardando Aprovação',
+            plano: 'pro',
+            status: 'pending', // Fica pendente para você aprovar no admin.html
+            criadoEm: new Date().toISOString(),
+            ultimoAcesso: new Date().toISOString(),
+            tutoresCount: 0,
+            petsCount: 0,
+            agendamentosCount: 0,
+            notas: [
+                { autor: 'Sistema', texto: 'Novo cadastro recebido via web. Aguardando conferência e liberação pelo Super Admin.', data: new Date().toLocaleString('pt-BR') }
+            ]
+        });
+        localStorage.setItem('ps_saas_tenants', JSON.stringify(saasTenants));
+    } catch (e) {}
 
     // Inicializar configurações exclusivas deste Pet Shop
     const settings = {
@@ -334,9 +379,7 @@ async function handleCadastroSubmit(event) {
     };
     DB.save(STORAGE_KEYS.SETTINGS, settings);
 
-    // Inicializar listas vazias (ou com dados de exemplo se solicitado)
     if (carregarExemplos) {
-        // Criar funcionários iniciais para que já possa agendar de imediato
         const employees = [
             { id: 'func_' + DB.generateId(), nome: responsavel, cargo: 'Gerente', telefone: telefone, email: email, comissaoTipo: 'percentual', comissaoValor: 0 },
             { id: 'func_' + DB.generateId(), nome: 'Profissional de Tosa', cargo: 'Tosador', telefone: '', email: '', comissaoTipo: 'percentual', comissaoValor: 15 },
@@ -344,7 +387,6 @@ async function handleCadastroSubmit(event) {
         ];
         DB.save(STORAGE_KEYS.EMPLOYEES, employees);
 
-        // Exemplos básicos de produtos para poder vender no PDV
         const products = [
             { id: 'prod_' + DB.generateId(), nome: 'Ração Premium Adulto 15kg', categoria: 'Rações', sku: 'RAC001', precoCusto: 90.00, precoVenda: 149.90, margem: 39.96, estoque: 10, estoqueMinimo: 3, unidade: 'un', fornecedor: 'Distribuidora Pet' },
             { id: 'prod_' + DB.generateId(), nome: 'Shampoo Neutro 500ml', categoria: 'Higiene', sku: 'HIG001', precoCusto: 12.00, precoVenda: 28.00, margem: 57.14, estoque: 15, estoqueMinimo: 4, unidade: 'un', fornecedor: 'Distribuidora Pet' },
@@ -375,10 +417,19 @@ async function handleCadastroSubmit(event) {
         DB.save(STORAGE_KEYS.STOCK_MOVEMENTS, []);
     }
 
-    logAudit('TENANT_CREATED', 'Segurança', `Novo Pet Shop cadastrado: ${nomePetShop} (${responsavel})`);
-    showToast(`Parabéns! O pet shop "${nomePetShop}" foi criado com sucesso!`, 'success');
+    logAudit('TENANT_REGISTERED_PENDING', 'Segurança', `Novo Pet Shop cadastrado aguardando aprovação: ${nomePetShop} (${responsavel})`);
 
-    setTimeout(() => {
-        window.location.href = 'index.html';
-    }, 1000);
+    // Feedback visual imediato e botão para WhatsApp do Dono
+    alert(
+        `✅ CADASTRO REALIZADO COM SUCESSO!\n\n` +
+        `Olá, ${responsavel}!\n` +
+        `O seu Pet Shop "${nomePetShop}" foi registrado em nossa plataforma.\n\n` +
+        `🔒 STATUS: AGUARDANDO LIBERAÇÃO DO ADMINISTRADOR\n` +
+        `Para sua segurança e ativação da licença, nossa equipe entrará em contato ou você pode enviar uma mensagem direta para liberação imediata no WhatsApp de Flávio Filho: (34) 99983-6438.`
+    );
+
+    // Redireciona para o WhatsApp de Flávio com mensagem pré-pronta
+    const msgZap = encodeURIComponent(`Olá Flávio! Acabei de cadastrar o pet shop "${nomePetShop}" (${responsavel} - ${telefone}) no PetShop Manager e aguardo a liberação do meu acesso.`);
+    window.location.href = `https://wa.me/5534999836438?text=${msgZap}`;
 }
+
