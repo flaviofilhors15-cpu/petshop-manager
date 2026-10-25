@@ -1128,7 +1128,29 @@ function initHeader() {
         <div class="header-left">
             <h1 class="header-title">${getPageTitle(currentPage)}</h1>
         </div>
-        <div class="header-right">
+        <div class="header-right" style="position:relative;">
+            <!-- 1. Botão de Ação Rápida no Topo (F2 / Criar) -->
+            <button class="btn-quick-action" onclick="toggleQuickActionMenu()" title="Atalho rápido: Pressione F2">
+                <i data-lucide="plus-circle" style="width:14px;height:14px;"></i>
+                <span>+ Criar Rápido</span>
+            </button>
+
+            <!-- Dropdown de Ações Rápidas -->
+            <div id="quick-action-dropdown" class="quick-action-dropdown">
+                <button class="quick-action-item" onclick="window.location.href='agenda.html'">
+                    <i data-lucide="calendar-plus"></i> Novo Agendamento
+                </button>
+                <button class="quick-action-item" onclick="window.location.href='vendas.html'">
+                    <i data-lucide="shopping-cart"></i> Nova Venda (PDV)
+                </button>
+                <button class="quick-action-item" onclick="window.location.href='clientes.html'">
+                    <i data-lucide="user-plus"></i> Novo Cliente / Pet
+                </button>
+                <button class="quick-action-item" onclick="window.location.href='financeiro.html'">
+                    <i data-lucide="plus-circle"></i> Nova Despesa
+                </button>
+            </div>
+
             <div class="tenant-badge-header" title="Pet Shop em atendimento: ${escapeHtml(nomeFantasia)}" onclick="window.location.href='configuracoes.html'">
                 <i data-lucide="store" style="width:14px;height:14px;"></i>
                 <span>${escapeHtml(nomeFantasia)}</span>
@@ -1150,9 +1172,9 @@ function initHeader() {
             <button class="header-icon" onclick="baixarBackupRapido()" title="Baixar Cópia de Segurança / Backup Seguro (.json ou .psbackup)">
                 <i data-lucide="hard-drive-download"></i>
             </button>
-            <div class="header-search">
+            <div class="header-search" onclick="abrirSpotlightBusca()" style="cursor:pointer;" title="Busca Global Rápida (Pressione Ctrl + K)">
                 <i data-lucide="search"></i>
-                <input type="text" placeholder="Buscar..." id="global-search">
+                <input type="text" placeholder="Buscar pets, clientes... (Ctrl + K)" id="global-search" readonly style="cursor:pointer;">
             </div>
             <button class="header-icon" id="btn-notifications" title="Notificações">
                 <i data-lucide="bell"></i>
@@ -1164,6 +1186,17 @@ function initHeader() {
             <div class="header-avatar" title="${escapeHtml(nomeFantasia)}">${nomeFantasia.charAt(0).toUpperCase()}</div>
         </div>
     `;
+
+    // Fechar dropdown de ações rápidas ao clicar fora
+    document.addEventListener('click', (e) => {
+        const drop = document.getElementById('quick-action-dropdown');
+        if (drop && !e.target.closest('.btn-quick-action') && !e.target.closest('#quick-action-dropdown')) {
+            drop.classList.remove('active');
+        }
+    });
+
+    // Injetar Spotlight no body se não existir
+    injetarSpotlightBusca();
 
     // Verificar alertas de estoque
     checkStockAlerts();
@@ -1706,3 +1739,283 @@ function exibirAvisosGlobaisPlataforma() {
         }
     } catch (e) {}
 }
+
+// ==========================================
+// FUNÇÕES DE PRODUTIVIDADE & USABILIDADE (1, 3, 4)
+// ==========================================
+
+// 1. Toggle do Menu de Ações Rápidas
+function toggleQuickActionMenu() {
+    const dropdown = document.getElementById('quick-action-dropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('active');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+}
+window.toggleQuickActionMenu = toggleQuickActionMenu;
+
+// Atalho F2 para Ações Rápidas em qualquer tela
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'F2') {
+        e.preventDefault();
+        toggleQuickActionMenu();
+    }
+});
+
+// 4. Spotlight / Busca Global Instantânea (Ctrl + K)
+function injetarSpotlightBusca() {
+    if (document.getElementById('spotlight-overlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'spotlight-overlay';
+    overlay.className = 'spotlight-overlay';
+    overlay.innerHTML = `
+        <div class="spotlight-box" onclick="event.stopPropagation()">
+            <div class="spotlight-header">
+                <i data-lucide="search" style="width:20px;height:20px;color:#3b82f6;"></i>
+                <input type="text" id="spotlight-input" placeholder="Digite para buscar pets, tutores, telefones ou produtos..." autocomplete="off">
+                <kbd style="background:#f1f5f9; padding:2px 8px; border-radius:4px; font-size:0.75rem; border:1px solid #cbd5e1; color:#64748b;">ESC</kbd>
+            </div>
+            <div class="spotlight-results" id="spotlight-results">
+                <div style="padding:1.5rem; text-align:center; color:#94a3b8; font-size:0.85rem;">
+                    Digite o nome de um pet, tutor ou produto...
+                </div>
+            </div>
+            <div class="spotlight-footer">
+                <div><span>Navegue com o mouse ou clique no resultado</span></div>
+                <div><strong style="color:#2563eb;">PetShop Manager</strong> • Busca Rápida</div>
+            </div>
+        </div>
+    `;
+
+    overlay.onclick = fecharSpotlightBusca;
+    document.body.appendChild(overlay);
+
+    const input = document.getElementById('spotlight-input');
+    if (input) {
+        input.addEventListener('input', (e) => processarBuscaSpotlight(e.target.value));
+    }
+}
+
+function abrirSpotlightBusca() {
+    injetarSpotlightBusca();
+    const overlay = document.getElementById('spotlight-overlay');
+    const input = document.getElementById('spotlight-input');
+    if (overlay && input) {
+        overlay.classList.add('active');
+        input.value = '';
+        input.focus();
+        processarBuscaSpotlight('');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+}
+window.abrirSpotlightBusca = abrirSpotlightBusca;
+
+function fecharSpotlightBusca() {
+    const overlay = document.getElementById('spotlight-overlay');
+    if (overlay) overlay.classList.remove('active');
+}
+window.fecharSpotlightBusca = fecharSpotlightBusca;
+
+// Atalho de Teclado Ctrl + K ou Cmd + K
+window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        abrirSpotlightBusca();
+    }
+    if (e.key === 'Escape') {
+        fecharSpotlightBusca();
+    }
+});
+
+function processarBuscaSpotlight(termo) {
+    const resultsContainer = document.getElementById('spotlight-results');
+    if (!resultsContainer) return;
+
+    termo = (termo || '').toLowerCase().trim();
+    if (!termo) {
+        resultsContainer.innerHTML = `
+            <div style="padding:1.5rem; text-align:center; color:#94a3b8; font-size:0.85rem;">
+                💡 Digite o nome de um pet, tutor, telefone ou produto para localizar imediatamente.
+            </div>
+        `;
+        return;
+    }
+
+    const clients = DB.get(STORAGE_KEYS.CLIENTS) || [];
+    const pets = DB.get(STORAGE_KEYS.PETS) || [];
+    const products = DB.get(STORAGE_KEYS.PRODUCTS) || [];
+
+    // Filtrar Pets
+    const petsMatch = pets.filter(p => p.nome.toLowerCase().includes(termo) || (p.raca && p.raca.toLowerCase().includes(termo))).slice(0, 4);
+    // Filtrar Clientes
+    const clientsMatch = clients.filter(c => c.nome.toLowerCase().includes(termo) || (c.telefone && c.telefone.includes(termo))).slice(0, 4);
+    // Filtrar Produtos
+    const productsMatch = products.filter(p => p.nome.toLowerCase().includes(termo) || (p.sku && p.sku.toLowerCase().includes(termo))).slice(0, 4);
+
+    if (petsMatch.length === 0 && clientsMatch.length === 0 && productsMatch.length === 0) {
+        resultsContainer.innerHTML = `
+            <div style="padding:1.5rem; text-align:center; color:#94a3b8; font-size:0.85rem;">
+                Nenhum resultado encontrado para "<strong>${escapeHtml(termo)}</strong>".
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+
+    if (petsMatch.length > 0) {
+        html += `<div class="spotlight-group-title">🐾 Pets Encontrados</div>`;
+        petsMatch.forEach(p => {
+            const tutor = clients.find(c => c.id === p.clienteId);
+            html += `
+                <a href="clientes.html" class="spotlight-result-item" onclick="fecharSpotlightBusca()">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:1.1rem;">🐶</span>
+                        <div>
+                            <div style="font-weight:600; font-size:0.9rem; color:#1e293b;">${escapeHtml(p.nome)}</div>
+                            <div style="font-size:0.75rem; color:#64748b;">${escapeHtml(p.raca || 'SRD')} • Tutor: ${escapeHtml(tutor ? tutor.nome : 'Não informado')}</div>
+                        </div>
+                    </div>
+                    <span class="badge badge-primary" style="font-size:0.72rem;">Porte ${p.porte || 'M'}</span>
+                </a>
+            `;
+        });
+    }
+
+    if (clientsMatch.length > 0) {
+        html += `<div class="spotlight-group-title">👤 Tutores / Clientes</div>`;
+        clientsMatch.forEach(c => {
+            html += `
+                <a href="clientes.html" class="spotlight-result-item" onclick="fecharSpotlightBusca()">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:1.1rem;">👤</span>
+                        <div>
+                            <div style="font-weight:600; font-size:0.9rem; color:#1e293b;">${escapeHtml(c.nome)}</div>
+                            <div style="font-size:0.75rem; color:#64748b;">WhatsApp: ${c.telefone || 'Não informado'}</div>
+                        </div>
+                    </div>
+                    <span class="badge badge-secondary" style="font-size:0.72rem;">Ver Perfil</span>
+                </a>
+            `;
+        });
+    }
+
+    if (productsMatch.length > 0) {
+        html += `<div class="spotlight-group-title">📦 Produtos no Estoque</div>`;
+        productsMatch.forEach(pr => {
+            html += `
+                <a href="estoque.html" class="spotlight-result-item" onclick="fecharSpotlightBusca()">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:1.1rem;">🏷️</span>
+                        <div>
+                            <div style="font-weight:600; font-size:0.9rem; color:#1e293b;">${escapeHtml(pr.nome)}</div>
+                            <div style="font-size:0.75rem; color:#64748b;">Estoque: <strong>${pr.estoque}</strong> ${pr.unidade || 'un'} • Preço: ${formatCurrency(pr.precoVenda)}</div>
+                        </div>
+                    </div>
+                    <span class="badge ${pr.estoque <= pr.estoqueMinimo ? 'badge-danger' : 'badge-success'}" style="font-size:0.72rem;">
+                        ${formatCurrency(pr.precoVenda)}
+                    </span>
+                </a>
+            `;
+        });
+    }
+
+    resultsContainer.innerHTML = html;
+}
+
+// 3. Fechamento de Caixa do Dia (Visualização e Impressão de Sangria / Fechamento)
+function abrirModalFechamentoCaixa() {
+    const revenues = DB.get(STORAGE_KEYS.REVENUES) || [];
+    const sales = DB.get(STORAGE_KEYS.SALES) || [];
+    const expenses = DB.get(STORAGE_KEYS.EXPENSES) || [];
+    const settings = DB.get(STORAGE_KEYS.SETTINGS) || {};
+
+    const hojeStr = new Date().toISOString().split('T')[0];
+
+    // Receitas de Hoje
+    const receitasHoje = revenues.filter(r => r.data === hojeStr);
+    const despesasHoje = expenses.filter(e => e.data === hojeStr);
+
+    let totalPix = 0;
+    let totalDinheiro = 0;
+    let totalDebito = 0;
+    let totalCredito = 0;
+    let totalOutros = 0;
+
+    receitasHoje.forEach(r => {
+        const f = (r.formaPagamento || '').toLowerCase();
+        const v = parseFloat(r.valor) || 0;
+        if (f.includes('pix')) totalPix += v;
+        else if (f.includes('dinheiro')) totalDinheiro += v;
+        else if (f.includes('débito') || f.includes('debito')) totalDebito += v;
+        else if (f.includes('crédito') || f.includes('credito') || f.includes('cartao') || f.includes('cartão')) totalCredito += v;
+        else totalOutros += v;
+    });
+
+    const totalEntradas = totalPix + totalDinheiro + totalDebito + totalCredito + totalOutros;
+    const totalSaidas = despesasHoje.reduce((acc, cur) => acc + (parseFloat(cur.valor) || 0), 0);
+    const saldoLiquidoCaixa = totalEntradas - totalSaidas;
+
+    let modal = document.getElementById('modal-fechamento-caixa');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-fechamento-caixa';
+        modal.className = 'modal-overlay';
+        document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+        <div class="modal modal-md">
+            <div class="modal-header">
+                <h2><i data-lucide="calculator" style="color:var(--primary); margin-right:6px;"></i> Fechamento e Resumo do Caixa do Dia</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-fechamento-caixa')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="printable-caixa-area" style="background:#fff; border:1px dashed #cbd5e1; border-radius:8px; padding:1.25rem; font-family:'Courier New', monospace; font-size:0.88rem; color:#1e293b;">
+                    <div style="text-align:center; border-bottom:1px dashed #cbd5e1; padding-bottom:0.75rem; margin-bottom:0.75rem;">
+                        <h3 style="font-size:1.15rem; font-weight:700; margin:0;">${escapeHtml(settings.nomeFantasia || 'PetShop Manager')}</h3>
+                        <div style="font-size:0.75rem; color:#64748b;">RELATÓRIO DE FECHAMENTO DIÁRIO DE CAIXA</div>
+                        <div style="font-size:0.8rem; margin-top:4px;">Data: <strong>${new Date().toLocaleDateString('pt-BR')}</strong> às ${new Date().toLocaleTimeString('pt-BR')}</div>
+                    </div>
+
+                    <div style="margin-bottom:1rem;">
+                        <strong style="text-transform:uppercase; font-size:0.78rem; color:#64748b;">Entradas por Forma de Pagamento:</strong>
+                        <div style="display:flex; justify-content:space-between; margin-top:4px;"><span>💵 Dinheiro em Espécie:</span> <strong>${formatCurrency(totalDinheiro)}</strong></div>
+                        <div style="display:flex; justify-content:space-between; margin-top:4px;"><span>⚡ Pix Recebido:</span> <strong>${formatCurrency(totalPix)}</strong></div>
+                        <div style="display:flex; justify-content:space-between; margin-top:4px;"><span>💳 Cartão de Débito:</span> <strong>${formatCurrency(totalDebito)}</strong></div>
+                        <div style="display:flex; justify-content:space-between; margin-top:4px;"><span>💳 Cartão de Crédito:</span> <strong>${formatCurrency(totalCredito)}</strong></div>
+                        ${totalOutros > 0 ? `<div style="display:flex; justify-content:space-between; margin-top:4px;"><span>Outros:</span> <strong>${formatCurrency(totalOutros)}</strong></div>` : ''}
+                    </div>
+
+                    <div style="border-top:1px dashed #cbd5e1; padding-top:0.6rem; margin-bottom:0.6rem;">
+                        <div style="display:flex; justify-content:space-between; font-size:1rem; color:#10b981;"><span>(+) TOTAL ENTRADAS:</span> <strong>${formatCurrency(totalEntradas)}</strong></div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.9rem; color:#ef4444; margin-top:4px;"><span>(-) TOTAL SAÍDAS/DESPESAS:</span> <strong>${formatCurrency(totalSaidas)}</strong></div>
+                    </div>
+
+                    <div style="border-top:2px solid #1e293b; padding-top:0.6rem; display:flex; justify-content:space-between; font-size:1.15rem; font-weight:700; color:#1e3a5f;">
+                        <span>(=) SALDO LÍQUIDO DO DIA:</span>
+                        <span>${formatCurrency(saldoLiquidoCaixa)}</span>
+                    </div>
+
+                    <div style="text-align:center; margin-top:1.5rem; font-size:0.75rem; color:#94a3b8; border-top:1px dashed #cbd5e1; padding-top:0.75rem;">
+                        Total de ${receitasHoje.length} transações processadas hoje.<br>
+                        Fechamento conferido pelo operador da loja.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex; justify-content:space-between;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-fechamento-caixa')">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="window.print()">
+                    <i data-lucide="printer"></i> Imprimir Fechamento de Caixa
+                </button>
+            </div>
+        </div>
+    `;
+
+    openModal('modal-fechamento-caixa');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+window.abrirModalFechamentoCaixa = abrirModalFechamentoCaixa;

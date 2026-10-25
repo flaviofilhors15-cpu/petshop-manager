@@ -27,6 +27,7 @@ function initDashboard() {
     // 4. Carregar listas de agendamentos e alertas de estoque
     renderizarAgendamentosHoje();
     renderizarAlertasEstoque();
+    renderizarKanbanDashboard();
 
     // 5. Atualizar ícones do Lucide
     if (typeof lucide !== 'undefined') {
@@ -827,6 +828,165 @@ function salvarReposicaoEstoque() {
 }
 
 /**
+ * Renderiza o Quadro Kanban de Banho & Tosa no Dashboard
+ */
+function renderizarKanbanDashboard() {
+    const container = document.getElementById('kanban-dashboard-board');
+    if (!container) return;
+
+    const appointments = DB.get(STORAGE_KEYS.APPOINTMENTS) || [];
+    const clients = DB.get(STORAGE_KEYS.CLIENTS) || [];
+    const pets = DB.get(STORAGE_KEYS.PETS) || [];
+    const employees = DB.get(STORAGE_KEYS.EMPLOYEES) || [];
+
+    // Filtrar apenas agendamentos de hoje
+    const apptsHoje = appointments.filter(a => isDataHoje(a.data));
+
+    // Categorias Kanban
+    const colunas = [
+        { id: 'agendado', label: '🕒 Aguardando Chegada', classe: 'esperando', itens: [] },
+        { id: 'em_andamento', label: '🚿 No Banho / Tosa', classe: 'andamento', itens: [] },
+        { id: 'pronto', label: '🐾 Pronto p/ Buscar', classe: 'pronto', itens: [] },
+        { id: 'concluido', label: '✅ Entregue / Concluído', classe: 'concluido', itens: [] }
+    ];
+
+    apptsHoje.forEach(a => {
+        let status = a.status || 'agendado';
+        // Mapeia se tiver status diferente
+        if (status === 'cancelado') return; // não exibe cancelados no kanban de fluxo ativo
+        if (status === 'pronto') {
+            colunas[2].itens.push(a);
+        } else if (status === 'em_andamento') {
+            colunas[1].itens.push(a);
+        } else if (status === 'concluido') {
+            colunas[3].itens.push(a);
+        } else {
+            colunas[0].itens.push(a);
+        }
+    });
+
+    let html = '';
+
+    colunas.forEach(col => {
+        html += `
+            <div class="kanban-dash-col ${col.classe}">
+                <div class="kanban-dash-col-header">
+                    <span>${col.label}</span>
+                    <span class="badge" style="background:#fff; border:1px solid currentColor;">${col.itens.length}</span>
+                </div>
+                <div class="kanban-dash-cards-list">
+        `;
+
+        if (col.itens.length === 0) {
+            html += `<div style="text-align:center; padding:1.5rem 0.5rem; color:#94a3b8; font-size:0.78rem;">Nenhum pet nesta etapa</div>`;
+        } else {
+            col.itens.forEach(item => {
+                const pet = pets.find(p => p.id === item.petId) || { nome: 'Pet', porte: 'M' };
+                const client = clients.find(c => c.id === item.clienteId) || { nome: 'Cliente', telefone: '' };
+                const emp = employees.find(e => e.id === item.funcionarioId) || { nome: 'Equipe' };
+
+                html += `
+                    <div class="kanban-dash-card">
+                        <div class="kanban-dash-card-title">
+                            <span>🐾 ${escapeHtml(pet.nome)}</span>
+                            <span style="font-size:0.75rem; color:#2563eb; font-weight:700;">${item.horario || '--:--'}</span>
+                        </div>
+                        <div class="kanban-dash-card-sub">
+                            <div><strong>${escapeHtml(item.servico || 'Banho')}</strong> • Porte ${pet.porte || 'M'}</div>
+                            <div style="font-size:0.72rem; color:#64748b;">Tutor: ${escapeHtml(client.nome)} (${emp.nome})</div>
+                        </div>
+
+                        <div class="kanban-dash-actions">
+                            ${col.id === 'agendado' ? `
+                                <button class="btn btn-sm btn-primary" style="flex:1; padding:3px 6px; font-size:0.72rem;" onclick="moverKanbanStatus('${item.id}', 'em_andamento')">
+                                    Iniciar Banho 🚿
+                                </button>
+                            ` : ''}
+
+                            ${col.id === 'em_andamento' ? `
+                                <button class="btn btn-sm btn-success" style="flex:1; padding:3px 6px; font-size:0.72rem; background:#10b981;" onclick="moverKanbanStatus('${item.id}', 'pronto')">
+                                    Ficou Pronto ✨
+                                </button>
+                            ` : ''}
+
+                            ${col.id === 'pronto' ? `
+                                <button class="btn btn-sm btn-success" style="flex:1; padding:3px 6px; font-size:0.72rem; background:#16a34a;" onclick="abrirModalWhatsApp('${item.id}', 'pronto_buscar')">
+                                    <i data-lucide="message-circle" style="width:12px;height:12px;"></i> Avisar Tutor
+                                </button>
+                                <button class="btn btn-sm btn-secondary" style="padding:3px 6px; font-size:0.72rem;" onclick="moverKanbanStatus('${item.id}', 'concluido')">
+                                    Entregue ✅
+                                </button>
+                            ` : ''}
+
+                            ${col.id === 'concluido' ? `
+                                <span style="font-size:0.72rem; color:#10b981; font-weight:600; text-align:center; width:100%;">Finalizado & Pago</span>
+                            ` : ''}
+
+                            <button class="btn-icon" style="padding:2px 4px;" onclick="abrirFichaBaia('${item.id}')" title="Imprimir Ficha de Baia/Gaiola">
+                                <i data-lucide="printer" style="width:13px;height:13px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        html += `
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+window.renderizarKanbanDashboard = renderizarKanbanDashboard;
+
+/**
+ * Move o status do pet no Kanban
+ */
+function moverKanbanStatus(apptId, novoStatus) {
+    const appointments = DB.get(STORAGE_KEYS.APPOINTMENTS) || [];
+    const index = appointments.findIndex(a => a.id === apptId);
+    if (index === -1) return;
+
+    appointments[index].status = novoStatus;
+
+    // Se concluiu, registra receita se ainda não tiver sido paga
+    if (novoStatus === 'concluido') {
+        const revenues = DB.get(STORAGE_KEYS.REVENUES) || [];
+        const jaRegistrado = revenues.some(r => r.referencia === apptId);
+        if (!jaRegistrado) {
+            const pet = (DB.get(STORAGE_KEYS.PETS) || []).find(p => p.id === appointments[index].petId);
+            const client = (DB.get(STORAGE_KEYS.CLIENTS) || []).find(c => c.id === appointments[index].clienteId);
+            revenues.push({
+                id: 'rec_' + DB.generateId(),
+                data: appointments[index].data || new Date().toISOString().split('T')[0],
+                descricao: `${appointments[index].servico || 'Serviço'} - ${pet ? pet.nome : 'Pet'} (${client ? client.nome : 'Cliente'})`,
+                categoria: 'Serviço',
+                valor: parseFloat(appointments[index].valor) || 0,
+                formaPagamento: 'Dinheiro',
+                referencia: apptId
+            });
+            DB.save(STORAGE_KEYS.REVENUES, revenues);
+        }
+    }
+
+    DB.save(STORAGE_KEYS.APPOINTMENTS, appointments);
+    showToast(`Status atualizado com sucesso!`, 'success');
+
+    // Se ficou pronto, pergunta se quer abrir o WhatsApp para avisar o tutor
+    if (novoStatus === 'pronto') {
+        setTimeout(() => {
+            abrirModalWhatsApp(apptId, 'pronto_buscar');
+        }, 300);
+    }
+
+    recarregarDashboard();
+}
+window.moverKanbanStatus = moverKanbanStatus;
+
+/**
  * Recarrega todas as informações do Dashboard
  */
 function recarregarDashboard() {
@@ -836,6 +996,7 @@ function recarregarDashboard() {
     renderizarGraficoProdutos();
     renderizarAgendamentosHoje();
     renderizarAlertasEstoque();
+    renderizarKanbanDashboard();
 
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();

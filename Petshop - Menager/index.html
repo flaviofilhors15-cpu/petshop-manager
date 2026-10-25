@@ -131,6 +131,32 @@
                 </div>
             </div>
 
+            <!-- Fila Operacional & Kanban de Banho e Tosa de Hoje -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 1rem;">
+                    <div>
+                        <h3 style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; margin: 0;">
+                            <i data-lucide="kanban" style="color: var(--primary); width: 22px; height: 22px;"></i>
+                            Fila Operacional de Banho & Tosa de Hoje (Kanban)
+                        </h3>
+                        <p style="font-size: 0.8rem; color: var(--text-light); margin: 2px 0 0;">Acompanhe em tempo real o fluxo dos pets na banheira, tosa e prontos para buscar.</p>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-sm btn-secondary" onclick="renderizarKanbanDashboard()">
+                            <i data-lucide="refresh-cw"></i> Atualizar Fila
+                        </button>
+                        <a href="agenda.html" class="btn btn-sm btn-primary">
+                            <i data-lucide="plus"></i> Novo Agendamento
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quadro Kanban das 4 Colunas -->
+                <div class="kanban-board" id="kanban-dashboard-board">
+                    <!-- Injetado dinamicamente via dashboard.js -->
+                </div>
+            </div>
+
             <!-- Grid de 2 Colunas: Agendamentos de Hoje e Alertas de Estoque -->
             <div class="grid-2">
                 <!-- Lista de Agendamentos de Hoje -->
@@ -138,7 +164,7 @@
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
                         <h3 style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem; margin: 0;">
                             <i data-lucide="calendar-check" style="color: var(--primary); width: 20px; height: 20px;"></i>
-                            Agendamentos de Hoje
+                            Lista Geral de Horários de Hoje
                             <span class="badge badge-info" id="badge-total-hoje">0</span>
                         </h3>
                         <a href="agenda.html" class="btn btn-sm btn-secondary">

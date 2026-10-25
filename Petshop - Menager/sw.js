@@ -3,7 +3,7 @@
 // Suporte PWA Offline-First e Cache Estratégico
 // ==========================================
 
-const CACHE_NAME = 'petshop-manager-v1.9';
+const CACHE_NAME = 'petshop-manager-v2.0';
 
 const ASSETS_TO_CACHE = [
   './',
