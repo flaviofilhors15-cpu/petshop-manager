@@ -317,6 +317,10 @@ function renderChartFaturamentoMensal(allRevenues) {
     }
 
     const ctx = canvas.getContext('2d');
+    const gradGiro = ctx.createLinearGradient(0, 0, 0, 260);
+    gradGiro.addColorStop(0, 'rgba(14, 165, 233, 0.35)');
+    gradGiro.addColorStop(1, 'rgba(14, 165, 233, 0.01)');
+
     chartFaturamentoInstance = new Chart(ctx, {
         type: 'line',
         data: {
@@ -324,16 +328,16 @@ function renderChartFaturamentoMensal(allRevenues) {
             datasets: [{
                 label: 'Faturamento Total (R$)',
                 data: dataValues,
-                borderColor: '#5BA4E6',
-                backgroundColor: 'rgba(91, 164, 230, 0.12)',
+                borderColor: '#0284c7',
+                backgroundColor: gradGiro,
                 borderWidth: 3,
                 fill: true,
                 tension: 0.35,
-                pointBackgroundColor: '#1E3A5F',
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: '#0284c7',
+                pointBorderWidth: 2.5,
                 pointRadius: 5,
-                pointHoverRadius: 7
+                pointHoverRadius: 8
             }]
         },
         options: {
@@ -342,6 +346,15 @@ function renderChartFaturamentoMensal(allRevenues) {
             plugins: {
                 legend: { display: false },
                 tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                    titleColor: '#f8fafc',
+                    titleFont: { family: 'Inter', size: 12, weight: '600' },
+                    bodyColor: '#cbd5e1',
+                    bodyFont: { family: 'Inter', size: 12 },
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
                     callbacks: {
                         label: function (ctx) {
                             return ` Faturamento: ${formatCurrency(ctx.parsed.y)}`;
@@ -350,9 +363,20 @@ function renderChartFaturamentoMensal(allRevenues) {
                 }
             },
             scales: {
+                x: {
+                    grid: { display: false, drawBorder: false },
+                    ticks: { font: { family: 'Inter', size: 11 }, color: '#64748b' }
+                },
                 y: {
                     beginAtZero: true,
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.15)',
+                        borderDash: [4, 4],
+                        drawBorder: false
+                    },
                     ticks: {
+                        font: { family: 'Inter', size: 11 },
+                        color: '#64748b',
                         callback: val => 'R$ ' + val.toLocaleString('pt-BR')
                     }
                 }
@@ -384,6 +408,14 @@ function renderChartReceitasDespesas(allRevenues, allExpenses) {
     }
 
     const ctx = canvas.getContext('2d');
+    const gradReceitas = ctx.createLinearGradient(0, 0, 0, 260);
+    gradReceitas.addColorStop(0, '#10b981');
+    gradReceitas.addColorStop(1, '#059669');
+
+    const gradDespesas = ctx.createLinearGradient(0, 0, 0, 260);
+    gradDespesas.addColorStop(0, '#f43f5e');
+    gradDespesas.addColorStop(1, '#e11d48');
+
     chartReceitasDespesasRelInstance = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -392,14 +424,18 @@ function renderChartReceitasDespesas(allRevenues, allExpenses) {
                 {
                     label: 'Receitas (R$)',
                     data: receitasData,
-                    backgroundColor: '#4CAF82',
-                    borderRadius: 5
+                    backgroundColor: gradReceitas,
+                    borderRadius: 8,
+                    borderSkipped: false,
+                    maxBarThickness: 34
                 },
                 {
                     label: 'Despesas (R$)',
                     data: despesasData,
-                    backgroundColor: '#E74C6F',
-                    borderRadius: 5
+                    backgroundColor: gradDespesas,
+                    borderRadius: 8,
+                    borderSkipped: false,
+                    maxBarThickness: 34
                 }
             ]
         },
@@ -407,17 +443,47 @@ function renderChartReceitasDespesas(allRevenues, allExpenses) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'top', labels: { boxWidth: 12 } },
+                legend: {
+                    position: 'top',
+                    labels: {
+                        boxWidth: 12,
+                        padding: 14,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        font: { family: 'Inter', size: 12, weight: '500' },
+                        color: '#475569'
+                    }
+                },
                 tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                    titleColor: '#f8fafc',
+                    titleFont: { family: 'Inter', size: 12, weight: '600' },
+                    bodyColor: '#cbd5e1',
+                    bodyFont: { family: 'Inter', size: 12 },
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
                     callbacks: {
                         label: ctx => ` ${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}`
                     }
                 }
             },
             scales: {
+                x: {
+                    grid: { display: false, drawBorder: false },
+                    ticks: { font: { family: 'Inter', size: 11 }, color: '#64748b' }
+                },
                 y: {
                     beginAtZero: true,
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.15)',
+                        borderDash: [4, 4],
+                        drawBorder: false
+                    },
                     ticks: {
+                        font: { family: 'Inter', size: 11 },
+                        color: '#64748b',
                         callback: val => 'R$ ' + val.toLocaleString('pt-BR')
                     }
                 }
@@ -426,7 +492,7 @@ function renderChartReceitasDespesas(allRevenues, allExpenses) {
     });
 }
 
-// 3. Gráfico de Pizza: Serviços por Tipo
+// 3. Gráfico de Rosca: Serviços por Tipo
 function renderChartServicosTipo(periodAppointments) {
     const canvas = document.getElementById('chartServicosTipo');
     if (!canvas) return;
@@ -449,30 +515,54 @@ function renderChartServicosTipo(periodAppointments) {
         chartServicosTipoInstance.destroy();
     }
 
-    const colors = ['#5BA4E6', '#F5A623', '#4CAF82', '#9C27B0', '#E74C6F', '#00BCD4'];
+    const colors = ['#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e', '#06b6d4'];
 
     const ctx = canvas.getContext('2d');
     chartServicosTipoInstance = new Chart(ctx, {
-        type: 'pie',
+        type: 'doughnut',
         data: {
             labels: labels,
             datasets: [{
                 data: data,
                 backgroundColor: colors.slice(0, labels.length),
-                borderColor: '#ffffff',
-                borderWidth: 2
+                borderWidth: 0,
+                borderRadius: 6,
+                spacing: 4
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '72%',
             plugins: {
-                legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
+                legend: {
+                    position: 'right',
+                    labels: {
+                        boxWidth: 12,
+                        padding: 12,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        font: { family: 'Inter', size: 11, weight: '500' },
+                        color: '#475569'
+                    }
+                },
                 tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                    titleColor: '#f8fafc',
+                    titleFont: { family: 'Inter', size: 12, weight: '600' },
+                    bodyColor: '#cbd5e1',
+                    bodyFont: { family: 'Inter', size: 12 },
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
                     callbacks: {
                         label: function (ctx) {
                             if (ctx.label === 'Nenhum serviço') return ' Sem dados no período';
-                            return ` ${ctx.label}: ${ctx.parsed} atendimento(s)`;
+                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            const val = ctx.parsed;
+                            const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0';
+                            return ` ${ctx.label}: ${val} atendimentos (${pct}%)`;
                         }
                     }
                 }
@@ -504,7 +594,7 @@ function renderChartVendasPagamento(periodRevenues) {
         chartVendasPagamentoInstance.destroy();
     }
 
-    const colors = ['#4CAF82', '#5BA4E6', '#F5A623', '#E74C6F', '#8A9BB5'];
+    const colors = ['#10b981', '#0ea5e9', '#f59e0b', '#8b5cf6', '#64748b'];
 
     const ctx = canvas.getContext('2d');
     chartVendasPagamentoInstance = new Chart(ctx, {
@@ -514,25 +604,48 @@ function renderChartVendasPagamento(periodRevenues) {
             datasets: [{
                 data: data,
                 backgroundColor: colors.slice(0, labels.length),
-                borderColor: '#ffffff',
-                borderWidth: 2
+                borderWidth: 0,
+                borderRadius: 6,
+                spacing: 4
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '72%',
             plugins: {
-                legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
+                legend: {
+                    position: 'right',
+                    labels: {
+                        boxWidth: 12,
+                        padding: 12,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        font: { family: 'Inter', size: 11, weight: '500' },
+                        color: '#475569'
+                    }
+                },
                 tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                    titleColor: '#f8fafc',
+                    titleFont: { family: 'Inter', size: 12, weight: '600' },
+                    bodyColor: '#cbd5e1',
+                    bodyFont: { family: 'Inter', size: 12 },
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
                     callbacks: {
                         label: function (ctx) {
                             if (ctx.label === 'Sem recebimentos') return ' Sem dados no período';
-                            return ` ${ctx.label}: ${formatCurrency(ctx.parsed)}`;
+                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            const val = ctx.parsed;
+                            const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0';
+                            return ` ${ctx.label}: ${formatCurrency(val)} (${pct}%)`;
                         }
                     }
                 }
-            },
-            cutout: '60%'
+            }
         }
     });
 }

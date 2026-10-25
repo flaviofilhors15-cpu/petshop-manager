@@ -701,6 +701,27 @@ function renderProjecaoTab() {
     const metaFaturamento = getMetaFaturamento();
     const hoje = new Date();
 
+    // Calcular faturamento e despesas reais do mês atual
+    const diasNoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+    const diaHoje = hoje.getDate();
+    const recsAtual = revenues.filter(r => {
+        if (!r.data) return false;
+        const rd = new Date(r.data + 'T00:00:00');
+        return rd.getFullYear() === hoje.getFullYear() && rd.getMonth() === hoje.getMonth();
+    });
+    const entradasReais = recsAtual.reduce((acc, r) => acc + (Number(r.valor) || 0), 0);
+
+    const despsAtual = expenses.filter(e => {
+        if (!e.data) return false;
+        const ed = new Date(e.data + 'T00:00:00');
+        return ed.getFullYear() === hoje.getFullYear() && ed.getMonth() === hoje.getMonth();
+    });
+    const saidasMes = despsAtual.reduce((acc, e) => acc + (Number(e.valor) || 0), 0);
+
+    // Base de projeção realista: mantém o patamar atual da loja se já houver receitas registradas
+    const faturamentoBaseFuturo = entradasReais > 0 ? entradasReais : metaFaturamento;
+    const custosBaseFuturo = saidasMes > 0 ? saidasMes : custoFixoMensal;
+
     // 6. Montagem da Projeção de 4 Meses (Mês Atual + 3 Meses Futuros)
     const dadosProjecao = [];
     let giroRollover = saldoGiroAtual;
@@ -711,35 +732,9 @@ function renderProjecaoTab() {
         const labelMes = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
 
         let saldoInicial = giroRollover;
-        let entradas = metaFaturamento;
-        let saidas = custoFixoMensal;
         let isAtual = (i === 0);
-
-        if (isAtual) {
-            // No mês atual, considera faturamento real até agora + projeção do restante
-            const diasNoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
-            const diaHoje = hoje.getDate();
-            const recsAtual = revenues.filter(r => {
-                if (!r.data) return false;
-                const rd = new Date(r.data + 'T00:00:00');
-                return rd.getFullYear() === hoje.getFullYear() && rd.getMonth() === hoje.getMonth();
-            });
-            const entradasReais = recsAtual.reduce((acc, r) => acc + (Number(r.valor) || 0), 0);
-            
-            if (entradasReais > 0) {
-                entradas = Math.max((entradasReais / Math.max(1, diaHoje)) * diasNoMes, metaFaturamento);
-            }
-
-            const despsAtual = expenses.filter(e => {
-                if (!e.data) return false;
-                const ed = new Date(e.data + 'T00:00:00');
-                return ed.getFullYear() === hoje.getFullYear() && ed.getMonth() === hoje.getMonth();
-            });
-            const saidasMes = despsAtual.reduce((acc, e) => acc + (Number(e.valor) || 0), 0);
-            if (saidasMes > 0) {
-                saidas = Math.max(saidasMes, custoFixoMensal);
-            }
-        }
+        let entradas = isAtual ? Math.max((entradasReais / Math.max(1, diaHoje)) * diasNoMes, faturamentoBaseFuturo) : faturamentoBaseFuturo;
+        let saidas = isAtual ? Math.max(saidasMes, custosBaseFuturo) : custosBaseFuturo;
 
         const resultadoMes = entradas - saidas;
         const saldoFinal = saldoInicial + resultadoMes;
@@ -837,16 +832,15 @@ function renderChartProjecao(dados) {
                     label: '💼 Caixa de Giro da Loja (R$)',
                     data: girosFinais,
                     borderColor: '#0284c7',
-                    backgroundColor: gradGiro,
                     borderWidth: 3,
                     pointBackgroundColor: '#ffffff',
                     pointBorderColor: '#0284c7',
                     pointBorderWidth: 2.5,
-                    pointRadius: 5,
-                    pointHoverRadius: 8,
-                    fill: true,
+                    pointRadius: 6,
+                    pointHoverRadius: 9,
+                    fill: false,
                     tension: 0.35,
-                    yAxisID: 'y'
+                    yAxisID: 'y1'
                 },
                 {
                     type: 'line',
@@ -858,11 +852,11 @@ function renderChartProjecao(dados) {
                     pointBackgroundColor: '#ffffff',
                     pointBorderColor: '#f59e0b',
                     pointBorderWidth: 2,
-                    pointRadius: 4.5,
-                    pointHoverRadius: 7,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
                     fill: false,
                     tension: 0,
-                    yAxisID: 'y'
+                    yAxisID: 'y1'
                 },
                 {
                     type: 'bar',
@@ -871,7 +865,7 @@ function renderChartProjecao(dados) {
                     backgroundColor: gradReceitas,
                     borderRadius: 8,
                     borderSkipped: false,
-                    maxBarThickness: 32,
+                    maxBarThickness: 36,
                     yAxisID: 'y'
                 },
                 {
@@ -881,7 +875,7 @@ function renderChartProjecao(dados) {
                     backgroundColor: gradDespesas,
                     borderRadius: 8,
                     borderSkipped: false,
-                    maxBarThickness: 32,
+                    maxBarThickness: 36,
                     yAxisID: 'y'
                 }
             ]
@@ -927,9 +921,13 @@ function renderChartProjecao(dados) {
             scales: {
                 x: {
                     grid: { display: false, drawBorder: false },
-                    ticks: { font: { family: 'Inter', size: 11 }, color: '#64748b' }
+                    ticks: { font: { family: 'Inter', size: 12, weight: '600' }, color: '#334155' }
                 },
                 y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: { display: true, text: 'Movimento Mensal (Barras)', font: { size: 11, family: 'Inter' }, color: '#64748b' },
                     beginAtZero: true,
                     grid: {
                         color: 'rgba(148, 163, 184, 0.15)',
@@ -939,6 +937,20 @@ function renderChartProjecao(dados) {
                     ticks: {
                         font: { family: 'Inter', size: 11 },
                         color: '#64748b',
+                        callback: function(val) {
+                            return 'R$ ' + val.toLocaleString('pt-BR');
+                        }
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: { display: true, text: 'Saldo Acumulado em Caixa (Linha)', font: { size: 11, family: 'Inter' }, color: '#0284c7' },
+                    grid: { drawOnChartArea: false, drawBorder: false },
+                    ticks: {
+                        font: { family: 'Inter', size: 11 },
+                        color: '#0284c7',
                         callback: function(val) {
                             return 'R$ ' + val.toLocaleString('pt-BR');
                         }
@@ -1411,8 +1423,7 @@ function salvarReceita(event) {
     closeModal('modal-receita');
     showToast('Receita registrada com sucesso!', 'success');
     renderReceitasTable();
-    updateFinanceSummary();
-    renderCharts();
+    renderResumoTab();
     if (typeof renderProjecaoTab === 'function') renderProjecaoTab();
 }
 window.salvarReceita = salvarReceita;
@@ -1424,8 +1435,7 @@ function excluirReceita(id) {
     DB.save(STORAGE_KEYS.REVENUES, revenues);
     showToast('Receita removida com sucesso!', 'success');
     renderReceitasTable();
-    updateFinanceSummary();
-    renderCharts();
+    renderResumoTab();
     if (typeof renderProjecaoTab === 'function') renderProjecaoTab();
 }
 window.excluirReceita = excluirReceita;
@@ -1448,11 +1458,12 @@ function popularOpcoesMesesImportacao() {
     const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     
     let html = '';
-    for (let i = 1; i <= 12; i++) {
+    // Gera opções começando pelo mês atual (0) até os 12 meses anteriores
+    for (let i = 0; i <= 12; i++) {
         const d = new Date(agora.getFullYear(), agora.getMonth() - i, 1);
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const rotulo = `${mesesNomes[d.getMonth()]} de ${yyyy}`;
+        const rotulo = i === 0 ? `${mesesNomes[d.getMonth()]} de ${yyyy} (Mês Atual)` : `${mesesNomes[d.getMonth()]} de ${yyyy}`;
         html += `<option value="${yyyy}-${mm}">${rotulo}</option>`;
     }
     select.innerHTML = html;
@@ -1528,10 +1539,10 @@ function salvarMesConsolidado(event) {
     document.getElementById('import-faturamento').value = '';
     document.getElementById('import-despesas').value = '';
     
+    closeModal('modal-importar-historico');
     renderReceitasTable();
     renderDespesasTable();
-    updateFinanceSummary();
-    renderCharts();
+    renderResumoTab();
     if (typeof renderProjecaoTab === 'function') renderProjecaoTab();
 }
 window.salvarMesConsolidado = salvarMesConsolidado;
@@ -1623,8 +1634,7 @@ function importarArquivoCSV(event) {
             showToast(`Sucesso! ${importadasRec} receitas e ${importadasDesp} despesas importadas.`, 'success');
             renderReceitasTable();
             renderDespesasTable();
-            updateFinanceSummary();
-            renderCharts();
+            renderResumoTab();
             if (typeof renderProjecaoTab === 'function') renderProjecaoTab();
         } catch (err) {
             console.error('Erro ao ler CSV:', err);

@@ -423,7 +423,7 @@ function removeCategory(tipo, index) {
 // ==========================================
 // SEÇÃO 5: BACKUP E RESTAURAÇÃO COMPLETA
 // ==========================================
-function exportFullBackup() {
+async function exportFullBackup() {
     const backupData = {
         meta: {
             app: 'PetShop Manager',

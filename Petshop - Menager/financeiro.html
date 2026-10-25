@@ -75,26 +75,119 @@
             </div>
 
             <!-- ============================================== -->
-            <!-- ABA 1: RESUMO -->
+            <!-- ABA 1: RESUMO GERAL & CAIXA -->
             <!-- ============================================== -->
             <div class="tab-pane active" id="tab-resumo">
 
-                <!-- 1. PAINEL DE POSIÇÃO REAL DO CAIXA & GASTOS PREVISTOS -->
+                <!-- 1. BLOCO: RESULTADO FINANCEIRO DO MÊS (COMPETÊNCIA / DRE) -->
+                <div style="margin-bottom: 1.5rem; background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem; margin-bottom: 1rem;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.3rem;">📅</span>
+                                <h2 style="font-size: 1.15rem; color: var(--text-primary); margin: 0; font-weight: 700;">
+                                    Resultado Financeiro do Mês (DRE)
+                                </h2>
+                                <span class="badge badge-info" style="font-size: 0.72rem; padding: 2px 8px;">Competência do Mês</span>
+                            </div>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);">
+                                Quanto a sua empresa faturou, gastou e lucrou líquido no período analisado.
+                            </span>
+                        </div>
+
+                        <!-- Filtro de Período do Mês -->
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                            <label for="resumo-periodo" style="font-weight: 600; font-size: 0.85rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.35rem;">
+                                <i data-lucide="calendar" style="width: 14px; height: 14px;"></i> Período:
+                            </label>
+                            <div class="filter-group" style="margin: 0;">
+                                <select id="resumo-periodo" onchange="onResumoPeriodChange()" style="padding: 0.35rem 0.65rem; font-size: 0.85rem; border-radius: 6px;">
+                                    <option value="mes_atual" selected>Este Mês (Atual)</option>
+                                    <option value="mes_anterior">Mês Anterior</option>
+                                    <option value="ultimos_30">Últimos 30 Dias</option>
+                                    <option value="ultimos_90">Últimos 90 Dias</option>
+                                    <option value="ano_atual">Este Ano</option>
+                                    <option value="todos">Todo o Histórico</option>
+                                    <option value="personalizado">Personalizado</option>
+                                </select>
+                            </div>
+                            <div id="resumo-custom-dates" style="display: none; align-items: center; gap: 0.5rem;">
+                                <input type="date" id="resumo-data-inicio" class="table-input" style="max-width: 130px; text-align: left; padding: 0.25rem 0.5rem;" onchange="renderResumoTab()">
+                                <span style="color: var(--text-light); font-size: 0.8rem;">até</span>
+                                <input type="date" id="resumo-data-fim" class="table-input" style="max-width: 130px; text-align: left; padding: 0.25rem 0.5rem;" onchange="renderResumoTab()">
+                            </div>
+                            <div id="resumo-periodo-badge" style="font-size: 0.8rem; color: var(--text-secondary); background: #f8fafc; padding: 4px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                                <strong id="resumo-periodo-texto">-</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cards de Estatísticas do Mês -->
+                    <div class="stats-grid" style="margin-bottom: 0;">
+                        <div class="stat-card">
+                            <div class="stat-info">
+                                <div class="stat-value text-primary" id="kpi-faturamento">R$ 0,00</div>
+                                <div class="stat-label">Faturamento do Mês</div>
+                            </div>
+                            <div class="stat-icon">
+                                <i data-lucide="dollar-sign"></i>
+                            </div>
+                        </div>
+
+                        <div class="stat-card danger">
+                            <div class="stat-info">
+                                <div class="stat-value text-danger" id="kpi-despesas">R$ 0,00</div>
+                                <div class="stat-label">Contas Pagas no Mês</div>
+                            </div>
+                            <div class="stat-icon">
+                                <i data-lucide="arrow-down-right"></i>
+                            </div>
+                        </div>
+
+                        <div class="stat-card success" id="card-lucro-liquido">
+                            <div class="stat-info">
+                                <div class="stat-value text-success" id="kpi-lucro">R$ 0,00</div>
+                                <div class="stat-label">Lucro Líquido do Mês</div>
+                            </div>
+                            <div class="stat-icon">
+                                <i data-lucide="trending-up"></i>
+                            </div>
+                        </div>
+
+                        <div class="stat-card accent">
+                            <div class="stat-info">
+                                <div class="stat-value" id="kpi-margem">0,0%</div>
+                                <div class="stat-label">Margem de Lucro</div>
+                            </div>
+                            <div class="stat-icon">
+                                <i data-lucide="percent"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. BLOCO: CAIXA TOTAL DA EMPRESA (TESOURARIA & BANCOS HOJE) -->
                 <div class="card mb-2" style="background: linear-gradient(135deg, #0f172a, #1e293b); color: #fff; padding: 1.25rem 1.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.85rem; margin-bottom: 1rem;">
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="font-size: 1.4rem;">💰</span>
+                            <span style="font-size: 1.4rem;">🏦</span>
                             <div>
-                                <h2 style="font-size: 1.15rem; color: #fff; margin: 0; font-weight: 700;">Posição do Caixa da Empresa</h2>
-                                <span style="font-size: 0.75rem; color: #94a3b8;">Saldo líquido real acumulado e distribuição física por canal</span>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <h2 style="font-size: 1.15rem; color: #fff; margin: 0; font-weight: 700;">Caixa Total Acumulado da Empresa</h2>
+                                    <span style="font-size: 0.7rem; background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 1px 6px; border-radius: 10px; font-weight: 600;">Tesouraria / Disponibilidade</span>
+                                </div>
+                                <span style="font-size: 0.75rem; color: #94a3b8;">Dinheiro real total que a empresa possui hoje (independente do mês) somando banco e gaveta</span>
                             </div>
                         </div>
                         <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-sm" onclick="abrirModalAjustarSaldos()" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 0.78rem; font-weight: 600;" title="Ajustar os saldos reais para bater com o seu extrato do banco">
+                                <i data-lucide="sliders" style="width: 13px; height: 13px;"></i> Ajustar Saldos Reais
+                            </button>
                             <button type="button" class="btn btn-sm" onclick="abrirModalSuprimento()" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.78rem; font-weight: 600;" title="Adicionar troco ou reforço à gaveta de dinheiro">
-                                <i data-lucide="plus-circle" style="width: 13px; height: 13px;"></i> + Troco / Suprimento
+                                <i data-lucide="plus-circle" style="width: 13px; height: 13px;"></i> + Troco
                             </button>
                             <button type="button" class="btn btn-sm" onclick="abrirModalSangria()" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); font-size: 0.78rem; font-weight: 600;" title="Retirar dinheiro da gaveta para cofre, banco ou despesa">
-                                <i data-lucide="minus-circle" style="width: 13px; height: 13px;"></i> − Sangria (Retirada)
+                                <i data-lucide="minus-circle" style="width: 13px; height: 13px;"></i> − Sangria
                             </button>
                             <button type="button" class="btn btn-sm" onclick="abrirModalRetiradaLucro()" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); font-size: 0.78rem; font-weight: 600;" title="Retirar lucro para o dono / pró-labore">
                                 <i data-lucide="wallet" style="width: 13px; height: 13px;"></i> Retirar Lucro
@@ -164,60 +257,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Filtro de Período do Resumo -->
-                <div class="card mb-2" style="padding: 1rem 1.25rem;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-                            <label for="resumo-periodo" style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
-                                <i data-lucide="calendar"></i> Período de Análise:
-                            </label>
-                            <div class="filter-group">
-                                <select id="resumo-periodo" onchange="onResumoPeriodChange()">
-                                    <option value="mes_atual" selected>Este Mês</option>
-                                    <option value="mes_anterior">Mês Anterior</option>
-                                    <option value="ultimos_30">Últimos 30 Dias</option>
-                                    <option value="ultimos_90">Últimos 90 Dias</option>
-                                    <option value="ano_atual">Este Ano</option>
-                                    <option value="todos">Todo o Histórico</option>
-                                    <option value="personalizado">Personalizado</option>
-                                </select>
-                            </div>
-                            <div id="resumo-custom-dates" style="display: none; align-items: center; gap: 0.5rem;">
-                                <input type="date" id="resumo-data-inicio" class="table-input" style="max-width: 140px; text-align: left;" onchange="renderResumoTab()">
-                                <span style="color: var(--text-light);">até</span>
-                                <input type="date" id="resumo-data-fim" class="table-input" style="max-width: 140px; text-align: left;" onchange="renderResumoTab()">
-                            </div>
-                        </div>
-                        <div id="resumo-periodo-badge" style="font-size: 0.85rem; color: var(--text-secondary);">
-                            Período: <strong id="resumo-periodo-texto">-</strong>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Cards de Estatísticas -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-info">
-                            <div class="stat-value text-primary" id="kpi-faturamento">R$ 0,00</div>
-                            <div class="stat-label">Faturamento Bruto</div>
-                        </div>
-                        <div class="stat-icon">
-                            <i data-lucide="dollar-sign"></i>
-                        </div>
-                    </div>
-
-                    <div class="stat-card danger">
-                        <div class="stat-info">
-                            <div class="stat-value text-danger" id="kpi-despesas">R$ 0,00</div>
-                            <div class="stat-label">Total de Despesas</div>
-                        </div>
-                        <div class="stat-icon">
-                            <i data-lucide="arrow-down-right"></i>
-                        </div>
-                    </div>
-
-                    <div class="stat-card success" id="card-lucro-liquido">
                         <div class="stat-info">
                             <div class="stat-value text-success" id="kpi-lucro">R$ 0,00</div>
                             <div class="stat-label">Lucro Líquido</div>
