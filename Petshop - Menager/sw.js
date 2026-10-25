@@ -1,9 +1,9 @@
 // ==========================================
 // PetShop Manager - Service Worker (sw.js)
-// Suporte PWA Offline-First e Cache Estratégico
+// Estratégia Network-First Segura (Evita ERR_FAILED)
 // ==========================================
 
-const CACHE_NAME = 'petshop-manager-v2.0';
+const CACHE_NAME = 'petshop-manager-v2.3';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -35,72 +35,39 @@ const ASSETS_TO_CACHE = [
   './icons/icon.svg'
 ];
 
-// Instalação do Service Worker e Cache dos Ativos Principais
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
-        console.warn('Alguns ativos não puderam ser pré-cacheados:', err);
-      });
-    }).then(() => self.skipWaiting())
-  );
+  self.skipWaiting();
 });
 
-// Ativação e Limpeza de Caches Antigos
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((name) => {
-          if (name !== CACHE_NAME) {
-            return caches.delete(name);
-          }
-        })
-      );
+    caches.keys().then((keys) => {
+      return Promise.all(keys.map((k) => caches.delete(k)));
     }).then(() => self.clients.claim())
   );
 });
 
-// Interceptação de Requisições de Rede (Offline-First)
+// Estratégia Network-First: Sempre busca da internet primeiro. Se offline, busca cache.
 self.addEventListener('fetch', (event) => {
-  // Ignora requisições não-GET e extensões/esquemas especiais
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith('http')) return;
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Retorna do cache imediatamente e tenta atualizar em background (Stale-While-Revalidate)
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, networkResponse);
-            });
-          }
-        }).catch(() => {/* modo offline */});
-
-        return cachedResponse;
-      }
-
-      // Se não estiver no cache, busca na rede
-      return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-          return networkResponse;
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
-
-        // Clona e salva cópia no cache
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-
         return networkResponse;
-      }).catch(() => {
-        // Se a rede falhar e for navegação de página, retorna index.html cacheado
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-      });
-    })
+      })
+      .catch(() => {
+        return caches.match(event.request).then((cached) => {
+          if (cached) return cached;
+          if (event.request.mode === 'navigate') {
+            return caches.match('./login.html') || caches.match('./index.html');
+          }
+        });
+      })
   );
 });

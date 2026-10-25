@@ -387,6 +387,12 @@
         </div>
 
         <nav class="adm-nav">
+            <!-- Botão de Acesso Direto ao Pet Shop Operacional -->
+            <a href="index.html" class="adm-nav-item" style="background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px dashed rgba(16, 185, 129, 0.4); margin-bottom: 8px; font-weight: 600;" title="Abrir o painel operacional de Pet Shop (PDV, Agenda, Banho & Tosa)">
+                <i data-lucide="store" style="color: #10b981;"></i>
+                <span>🏪 Ir para o Pet Shop</span>
+            </a>
+
             <div class="adm-nav-item active" onclick="navegarAdmin('dashboard', this)">
                 <i data-lucide="layout-dashboard"></i>
                 <span>Visão Executiva</span>
@@ -429,6 +435,9 @@
                 </div>
             </div>
             <div style="display:flex; gap:6px; margin-top:4px;">
+                <a href="index.html" class="btn btn-secondary btn-sm" style="flex:1; justify-content:center; font-size:0.75rem; color:#10b981; border-color:rgba(16, 185, 129, 0.35); text-decoration:none;" title="Ir para o Pet Shop Operacional">
+                    <i data-lucide="store"></i> Loja
+                </a>
                 <button class="btn btn-secondary btn-sm" style="flex:1; justify-content:center; font-size:0.75rem;" onclick="alternarTemaAdmin()" title="Alternar Modo Escuro / Claro">
                     <i data-lucide="moon" id="icon-theme"></i> Tema
                 </button>
@@ -447,7 +456,11 @@
                 <i data-lucide="search"></i>
                 <input type="text" id="input-busca-global" placeholder="Buscar loja por nome, CNPJ, responsável ou fone..." oninput="filtrarLojasRapido(this.value)">
             </div>
-            <div style="display:flex; align-items:center; gap:1rem;">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+                <a href="index.html" class="btn btn-secondary btn-sm" style="color:#10b981; border-color:rgba(16, 185, 129, 0.4); font-weight:600; display:inline-flex; align-items:center; gap:6px; text-decoration:none;" title="Abrir sistema operacional de Pet Shop (PDV, Banho & Tosa, Agenda)">
+                    <i data-lucide="store" style="width:15px; height:15px;"></i>
+                    <span>🏪 Ir para o Pet Shop</span>
+                </a>
                 <div style="font-size:0.82rem; color:var(--adm-text-muted); background:var(--adm-bg); padding:6px 12px; border-radius:20px; border:1px solid var(--adm-border);">
                     Ambiente Master • <strong style="color:#10b981;">Conectado</strong>
                 </div>

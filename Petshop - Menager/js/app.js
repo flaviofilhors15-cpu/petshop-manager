@@ -1155,6 +1155,12 @@ function initHeader() {
                 <i data-lucide="store" style="width:14px;height:14px;"></i>
                 <span>${escapeHtml(nomeFantasia)}</span>
             </div>
+            ${localStorage.getItem('ps_is_platform_owner') === 'true' ? `
+            <button class="btn btn-sm" style="display:inline-flex; align-items:center; gap:5px; background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; border:none; border-radius:20px; padding:4px 10px; font-weight:700; font-size:0.75rem; box-shadow:0 2px 8px rgba(245,158,11,0.3); cursor:pointer;" onclick="window.location.href='admin.html'" title="Retornar à Central do Dono da Plataforma (Super Admin)">
+                <i data-lucide="crown" style="width:13px; height:13px;"></i>
+                <span>Central do Dono</span>
+            </button>
+            ` : ''}
             <!-- Seletor Rápido de Perfil (RBAC) -->
             <div style="display:flex; align-items:center; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:20px; padding:2px 8px;" title="Perfil Operacional da Sessão (Controle de Acesso RBAC)">
                 <i data-lucide="shield" style="width:13px; height:13px; color:#475569; margin-right:4px;"></i>

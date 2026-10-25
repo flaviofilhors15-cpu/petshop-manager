@@ -31,6 +31,10 @@
                     </p>
                 </div>
                 <div class="actions">
+                    <button class="btn btn-secondary" onclick="abrirModalRetiradaLucro()" title="Registrar retirada de lucro pessoal ou pró-labore">
+                        <i data-lucide="wallet"></i>
+                        <span>Retirar Lucro</span>
+                    </button>
                     <button class="btn btn-secondary" onclick="exportFinanceReport()">
                         <i data-lucide="printer"></i>
                         <span>Imprimir Relatório</span>
@@ -46,7 +50,11 @@
             <div class="tabs">
                 <button class="tab-btn active" data-tab="tab-resumo" onclick="switchFinanceTab('tab-resumo')">
                     <i data-lucide="layout-dashboard"></i>
-                    <span>Resumo Geral</span>
+                    <span>Resumo Geral & Caixa</span>
+                </button>
+                <button class="tab-btn" data-tab="tab-projecao" onclick="switchFinanceTab('tab-projecao')">
+                    <i data-lucide="line-chart"></i>
+                    <span>Projeção Futura (Meses)</span>
                 </button>
                 <button class="tab-btn" data-tab="tab-receitas" onclick="switchFinanceTab('tab-receitas')">
                     <i data-lucide="trending-up"></i>
@@ -54,7 +62,7 @@
                 </button>
                 <button class="tab-btn" data-tab="tab-despesas" onclick="switchFinanceTab('tab-despesas')">
                     <i data-lucide="trending-down"></i>
-                    <span>Despesas</span>
+                    <span>Despesas & Contas a Pagar</span>
                 </button>
             </div>
 
@@ -62,6 +70,93 @@
             <!-- ABA 1: RESUMO -->
             <!-- ============================================== -->
             <div class="tab-pane active" id="tab-resumo">
+
+                <!-- 1. PAINEL DE POSIÇÃO REAL DO CAIXA & GASTOS PREVISTOS -->
+                <div class="card mb-2" style="background: linear-gradient(135deg, #0f172a, #1e293b); color: #fff; padding: 1.25rem 1.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.85rem; margin-bottom: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.4rem;">💰</span>
+                            <div>
+                                <h2 style="font-size: 1.15rem; color: #fff; margin: 0; font-weight: 700;">Posição do Caixa da Empresa</h2>
+                                <span style="font-size: 0.75rem; color: #94a3b8;">Saldo líquido real acumulado e distribuição física por canal</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-sm" onclick="abrirModalSuprimento()" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.78rem; font-weight: 600;" title="Adicionar troco ou reforço à gaveta de dinheiro">
+                                <i data-lucide="plus-circle" style="width: 13px; height: 13px;"></i> + Troco / Suprimento
+                            </button>
+                            <button type="button" class="btn btn-sm" onclick="abrirModalSangria()" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); font-size: 0.78rem; font-weight: 600;" title="Retirar dinheiro da gaveta para cofre, banco ou despesa">
+                                <i data-lucide="minus-circle" style="width: 13px; height: 13px;"></i> − Sangria (Retirada)
+                            </button>
+                            <button type="button" class="btn btn-sm" onclick="abrirModalRetiradaLucro()" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); font-size: 0.78rem; font-weight: 600;" title="Retirar lucro para o dono / pró-labore">
+                                <i data-lucide="wallet" style="width: 13px; height: 13px;"></i> Retirar Lucro
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Grid de Saldos por Canal -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                        <!-- Saldo Total Acumulado -->
+                        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; font-weight: 600; display: flex; justify-content: space-between;">
+                                <span>Saldo Total em Caixa</span>
+                                <i data-lucide="landmark" style="width: 14px; height: 14px; color: #60a5fa;"></i>
+                            </div>
+                            <div style="font-size: 1.6rem; font-weight: 800; color: #38bdf8; margin: 4px 0 2px;" id="caixa-saldo-total">R$ 0,00</div>
+                            <div style="font-size: 0.72rem; color: #94a3b8;">Total acumulado da empresa</div>
+                        </div>
+
+                        <!-- Dinheiro na Gaveta -->
+                        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; font-weight: 600; display: flex; justify-content: space-between;">
+                                <span>💵 Na Gaveta (Espécie)</span>
+                                <i data-lucide="banknote" style="width: 14px; height: 14px; color: #34d399;"></i>
+                            </div>
+                            <div style="font-size: 1.6rem; font-weight: 800; color: #34d399; margin: 4px 0 2px;" id="caixa-saldo-dinheiro">R$ 0,00</div>
+                            <div style="font-size: 0.72rem; color: #94a3b8;">Dinheiro físico para troco</div>
+                        </div>
+
+                        <!-- Pix (Conta Bancária) -->
+                        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; font-weight: 600; display: flex; justify-content: space-between;">
+                                <span>⚡ No Pix (Banco)</span>
+                                <i data-lucide="zap" style="width: 14px; height: 14px; color: #a78bfa;"></i>
+                            </div>
+                            <div style="font-size: 1.6rem; font-weight: 800; color: #c084fc; margin: 4px 0 2px;" id="caixa-saldo-pix">R$ 0,00</div>
+                            <div style="font-size: 0.72rem; color: #94a3b8;">Disponível na conta bancária</div>
+                        </div>
+
+                        <!-- Cartões (Maquininha) -->
+                        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; font-weight: 600; display: flex; justify-content: space-between;">
+                                <span>💳 Cartões (Maquininha)</span>
+                                <i data-lucide="credit-card" style="width: 14px; height: 14px; color: #fbbf24;"></i>
+                            </div>
+                            <div style="font-size: 1.6rem; font-weight: 800; color: #fbbf24; margin: 4px 0 2px;" id="caixa-saldo-cartoes">R$ 0,00</div>
+                            <div style="font-size: 0.72rem; color: #94a3b8;">Débito + Crédito faturados</div>
+                        </div>
+                    </div>
+
+                    <!-- Radar de Gastos Previstos e Saldo Livre -->
+                    <div style="background: rgba(0,0,0,0.25); border-radius: 8px; padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-left: 4px solid #f59e0b;">
+                        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                            <div>
+                                <span style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">Gastos Previstos (Mês):</span>
+                                <div style="font-size: 1rem; font-weight: 700; color: #f87171;" id="kpi-gastos-previstos">R$ 0,00</div>
+                            </div>
+                            <div>
+                                <span style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">A Vencer em 7 Dias:</span>
+                                <div style="font-size: 1rem; font-weight: 700; color: #fbbf24;" id="kpi-vencendo-7dias">R$ 0,00 (0 contas)</div>
+                            </div>
+                        </div>
+
+                        <div style="text-align: right;">
+                            <span style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">🛡️ Saldo Real Livre (Líquido − Contas):</span>
+                            <div style="font-size: 1.25rem; font-weight: 800; color: #34d399;" id="kpi-saldo-real-livre">R$ 0,00</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Filtro de Período do Resumo -->
                 <div class="card mb-2" style="padding: 1rem 1.25rem;">
                     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
@@ -152,6 +247,109 @@
                         </div>
                         <canvas id="chartDespesasCategoria" height="260"></canvas>
                     </div>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- ABA: PROJEÇÃO FUTURA DOS MESES (FLUXO DE CAIXA) -->
+            <!-- ============================================== -->
+            <div class="tab-pane" id="tab-projecao">
+                <!-- Card de Reserva de Emergência e Indicadores -->
+                <div class="card mb-2" style="background: linear-gradient(135deg, #1e3a5f, #0f172a); color: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="shield-check" style="color: #34d399; width: 22px; height: 22px;"></i>
+                                <h2 style="font-size: 1.25rem; color: #fff; margin: 0; font-weight: 700;">Reserva de Emergência da Empresa</h2>
+                            </div>
+                            <p style="color: #94a3b8; font-size: 0.85rem; margin: 4px 0 0;">
+                                O caixa acumulado protege a sua empresa contra meses fracos e garante o pagamento de salários e fornecedores.
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn btn-sm" onclick="abrirModalRetiradaLucro()" style="background: #f59e0b; color: #fff; border: none; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                <i data-lucide="wallet" style="width: 14px; height: 14px;"></i> Retirar Lucro (Pró-labore)
+                            </button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="renderProjecaoTab()" style="background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2); display: inline-flex; align-items: center; gap: 6px;">
+                                <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Recalcular Projeção
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.25rem;">
+                        <div style="background: rgba(255,255,255,0.06); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
+                            <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">Reserva Acumulada em Caixa</div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: #38bdf8; margin: 4px 0;" id="proj-reserva-atual">R$ 0,00</div>
+                            <div style="font-size: 0.72rem; color: #94a3b8;">Saldo líquido real da empresa</div>
+                        </div>
+
+                        <div style="background: rgba(255,255,255,0.06); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
+                            <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">Custo Fixo Médio / Mês</div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: #f87171; margin: 4px 0;" id="proj-custo-fixo">R$ 0,00</div>
+                            <div style="font-size: 0.72rem; color: #94a3b8;">Despesas fixas recorrentes</div>
+                        </div>
+
+                        <div style="background: rgba(255,255,255,0.06); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
+                            <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">Autonomia Garantida</div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: #34d399; margin: 4px 0;" id="proj-meses-autonomia">0.0 meses</div>
+                            <div style="font-size: 0.72rem; color: #94a3b8;">De sobrevivência sem novas vendas</div>
+                        </div>
+
+                        <div style="background: rgba(255,255,255,0.06); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
+                            <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">Retiradas de Lucro no Ano</div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: #fbbf24; margin: 4px 0;" id="proj-total-retiradas">R$ 0,00</div>
+                            <div style="font-size: 0.72rem; color: #94a3b8;">Distribuído aos sócios/dono</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Evolução do Saldo Acumulado & Fluxo -->
+                <div class="card mb-2" style="padding: 1.25rem 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div>
+                            <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0;">
+                                Evolução do Saldo Acumulado & Fluxo Previsto
+                            </h3>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);">
+                                Demonstrativo do fluxo mensal e projeção dos próximos 3 meses
+                            </span>
+                        </div>
+                        <span class="badge badge-info" style="font-size: 0.75rem;">Projeção Inteligente</span>
+                    </div>
+                    <div style="height: 270px;">
+                        <canvas id="chartProjecaoMeses"></canvas>
+                    </div>
+                </div>
+
+                <!-- Tabela de Fluxo de Caixa Projetado Mês a Mês -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <h3 style="font-size: 1rem; color: var(--text-primary); margin: 0;">
+                                Demonstrativo Mês a Mês (Rollover de Caixa)
+                            </h3>
+                        </div>
+                        <span style="font-size: 0.82rem; color: var(--text-secondary);">
+                            Saldo Inicial + Entradas − Saídas = Saldo Acumulado
+                        </span>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Mês / Período</th>
+                                <th style="text-align: right;">Saldo Inicial</th>
+                                <th style="text-align: right;">Receitas Estimadas</th>
+                                <th style="text-align: right;">Despesas Previstas</th>
+                                <th style="text-align: right;">Resultado do Mês</th>
+                                <th style="text-align: right;">🏁 Saldo Final Acumulado</th>
+                                <th style="text-align: center;">Saúde Financeira</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-projecao-body">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -260,6 +458,14 @@
                         </div>
 
                         <div class="filter-group">
+                            <select id="desp-status" onchange="onFilterDespesas()">
+                                <option value="">Todos os Status</option>
+                                <option value="pago">🟢 Pagas</option>
+                                <option value="pendente">🟠 A Pagar (Previstas)</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
                             <input type="date" id="desp-data-inicio" title="Data Inicial" onchange="onFilterDespesas()">
                         </div>
                         <div class="filter-group">
@@ -280,7 +486,7 @@
                 <div class="table-container">
                     <div class="table-header">
                         <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <h3 style="font-size: 1rem; color: var(--text-primary);">Despesas Operacionais</h3>
+                            <h3 style="font-size: 1rem; color: var(--text-primary);">Despesas & Contas a Pagar</h3>
                             <span class="badge badge-danger" id="desp-total-count">0 registros</span>
                         </div>
                         <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">
@@ -291,12 +497,13 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th style="width: 120px;">Data</th>
+                                <th style="width: 110px;">Vencimento</th>
                                 <th>Descrição</th>
-                                <th style="width: 150px;">Categoria</th>
-                                <th style="width: 130px; text-align: center;">Recorrente</th>
-                                <th style="width: 130px; text-align: right;">Valor</th>
-                                <th style="width: 100px; text-align: center;">Ações</th>
+                                <th style="width: 140px;">Categoria</th>
+                                <th style="width: 120px; text-align: center;">Status</th>
+                                <th style="width: 110px; text-align: center;">Recorrente</th>
+                                <th style="width: 120px; text-align: right;">Valor</th>
+                                <th style="width: 130px; text-align: center;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="desp-table-body">
@@ -346,24 +553,151 @@
                         </div>
                     </div>
 
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="despesa-status">Situação do Pagamento <span class="text-danger">*</span></label>
+                            <select id="despesa-status" required>
+                                <option value="pago" selected>🟢 Já Pago (Saiu do Caixa)</option>
+                                <option value="pendente">🟠 A Pagar / Previsto (Vence no futuro)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="despesa-forma-pagamento">Forma de Saída</label>
+                            <select id="despesa-forma-pagamento">
+                                <option value="Pix" selected>⚡ Pix / Conta Bancária</option>
+                                <option value="Dinheiro">💵 Dinheiro (Gaveta)</option>
+                                <option value="Cartão">💳 Cartão de Crédito/Débito</option>
+                                <option value="Boleto">📄 Boleto Bancário</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="form-group">
-                        <label for="despesa-data">Data de Competência <span class="text-danger">*</span></label>
+                        <label for="despesa-data">Data de Vencimento / Competência <span class="text-danger">*</span></label>
                         <input type="date" id="despesa-data" required>
                     </div>
 
                     <div class="form-group" style="margin-top: 1rem;">
                         <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: normal;">
                             <input type="checkbox" id="despesa-recorrente" style="width: auto; cursor: pointer;">
-                            <span>Despesa recorrente mensal</span>
+                            <span>Despesa fixa recorrente (Aluguel, Luz, Salários, Software...)</span>
                         </label>
                         <span style="font-size: 0.75rem; color: var(--text-light); margin-left: 1.5rem; display: block;">
-                            Indica contas fixas mensais como aluguel, salários, internet.
+                            O sistema usará despesas recorrentes para projetar automaticamente os meses futuros.
                         </span>
                     </div>
 
                     <div class="modal-footer" style="padding: 1rem 0 0; margin-top: 1.5rem;">
                         <button type="button" class="btn btn-secondary" onclick="closeModal('modal-despesa')">Cancelar</button>
                         <button type="submit" class="btn btn-primary" id="btn-salvar-despesa">Salvar Despesa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: SUPRIMENTO DE CAIXA (TROCO) -->
+    <!-- ============================================== -->
+    <div class="modal-overlay" id="modal-suprimento">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>➕ Adicionar Troco à Gaveta (Suprimento)</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-suprimento')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-suprimento" onsubmit="salvarSuprimento(event)">
+                    <div class="form-group">
+                        <label for="suprimento-valor">Valor a Entrar na Gaveta (R$) <span class="text-danger">*</span></label>
+                        <input type="number" id="suprimento-valor" step="0.01" min="0.01" required placeholder="Ex: 100,00" autofocus>
+                    </div>
+                    <div class="form-group">
+                        <label for="suprimento-motivo">Motivo / Origem</label>
+                        <input type="text" id="suprimento-motivo" placeholder="Ex: Fundo de troco do dia, aporte inicial">
+                    </div>
+                    <div class="modal-footer" style="padding: 1rem 0 0; margin-top: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-suprimento')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" style="background:#10b981; border-color:#10b981;">
+                            <i data-lucide="check"></i> Confirmar Entrada
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: SANGRIA DE CAIXA (RETIRADA DA GAVETA) -->
+    <!-- ============================================== -->
+    <div class="modal-overlay" id="modal-sangria">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>➖ Sangria de Caixa (Retirada da Gaveta)</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-sangria')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-sangria" onsubmit="salvarSangria(event)">
+                    <div class="form-group">
+                        <label for="sangria-valor">Valor a Retirar (R$) <span class="text-danger">*</span></label>
+                        <input type="number" id="sangria-valor" step="0.01" min="0.01" required placeholder="Ex: 300,00" autofocus>
+                    </div>
+                    <div class="form-group">
+                        <label for="sangria-motivo">Destino / Motivo da Retirada <span class="text-danger">*</span></label>
+                        <input type="text" id="sangria-motivo" required placeholder="Ex: Depósito no banco, Envio para cofre, Pagamento avulso">
+                    </div>
+                    <div class="modal-footer" style="padding: 1rem 0 0; margin-top: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-sangria')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" style="background:#ef4444; border-color:#ef4444;">
+                            <i data-lucide="check"></i> Confirmar Retirada
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: RETIRADA DE LUCRO / PRÓ-LABORE DO DONO -->
+    <!-- ============================================== -->
+    <div class="modal-overlay" id="modal-retirada-lucro">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>💸 Retirada de Lucro / Pró-labore</h2>
+                <button class="btn-icon modal-close" onclick="closeModal('modal-retirada-lucro')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:0.75rem 1rem; margin-bottom:1rem; font-size:0.82rem; color:#1e40af;">
+                    💡 A retirada de lucro abate da reserva da empresa e registra a saída como transferência pessoal para o dono/sócio.
+                </div>
+                <form id="form-retirada-lucro" onsubmit="salvarRetiradaLucro(event)">
+                    <div class="form-group">
+                        <label for="retirada-valor">Valor a Retirar (R$) <span class="text-danger">*</span></label>
+                        <input type="number" id="retirada-valor" step="0.01" min="0.01" required placeholder="Ex: 2000,00" autofocus>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="retirada-favorecido">Sócio / Favorecido</label>
+                            <input type="text" id="retirada-favorecido" value="Flávio Filho (Dono)" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="retirada-origem">Saindo de</label>
+                            <select id="retirada-origem" required>
+                                <option value="Pix" selected>⚡ Conta Bancária / Pix</option>
+                                <option value="Dinheiro">💵 Gaveta em Espécie</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="padding: 1rem 0 0; margin-top: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-retirada-lucro')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" style="background:#f59e0b; border-color:#f59e0b;">
+                            <i data-lucide="check"></i> Confirmar Retirada
+                        </button>
                     </div>
                 </form>
             </div>

@@ -203,11 +203,9 @@ async function handleLoginSubmit(event) {
     if (tenant.isMasterOwner || email === 'flaviofilhors15@gmail.com') {
         localStorage.setItem('ps_is_platform_owner', 'true');
         logAudit('LOGIN_OWNER', 'SuperAdmin', `Login Master efetuado por Flávio Filho (${email})`);
-        showToast('👑 Bem-vindo, Flávio Filho! Abrindo o Painel Master do Dono...', 'success');
-
-        setTimeout(() => {
-            window.location.href = 'admin.html';
-        }, 500);
+        
+        // Exibe modal para o Dono escolher onde deseja entrar: Central do Dono ou Painel Operacional do Pet Shop
+        exibirModalEscolhaAmbienteDono();
         return;
     }
 
@@ -257,12 +255,110 @@ async function entrarComoDemo() {
     localStorage.setItem('ps_current_tenant_name', 'PetShop Manager Demo');
 
     logAudit('LOGIN_DEMO', 'Autenticação', 'Acesso realizado via modo Demonstração');
-    showToast('Acessando Pet Shop de demonstração com proteção ativa...', 'info');
+    showToast('Acessando Pet Shop de demonstração...', 'info');
 
     setTimeout(() => {
         window.location.href = 'index.html';
-    }, 500);
+    }, 400);
 }
+window.entrarComoDemo = entrarComoDemo;
+
+// Modal para o Dono (Flávio Filho) escolher se entra no Painel SaaS ou no Pet Shop Operacional
+function exibirModalEscolhaAmbienteDono() {
+    let modal = document.getElementById('modal-escolha-ambiente-dono');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-escolha-ambiente-dono';
+        modal.className = 'modal-overlay active';
+        document.body.appendChild(modal);
+    } else {
+        modal.classList.add('active');
+        modal.style.display = 'flex';
+    }
+
+    modal.innerHTML = `
+        <div class="modal" style="max-width: 520px; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); padding: 0; border: 1px solid #e2e8f0; animation: fadeIn 0.25s ease;">
+            <!-- Topo do Modal -->
+            <div style="background: linear-gradient(135deg, #0f172a, #1e293b); color: #fff; padding: 1.75rem 1.5rem; text-align: center; position: relative;">
+                <div style="width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b, #d97706); display: inline-flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 0.75rem; box-shadow: 0 4px 15px rgba(245,158,11,0.4);">
+                    👑
+                </div>
+                <h2 style="margin: 0; font-size: 1.35rem; color: #fff; font-weight: 700; font-family: 'Poppins', sans-serif;">Olá, Flávio Filho!</h2>
+                <p style="margin: 6px 0 0; font-size: 0.88rem; color: #94a3b8;">
+                    Identificamos seu acesso como <strong>Dono Master da Plataforma</strong>.<br>Onde você deseja entrar agora?
+                </p>
+            </div>
+
+            <!-- Opções de Escolha -->
+            <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 0.9rem; background: #f8fafc;">
+                
+                <!-- OPÇÃO 1: CENTRAL DO DONO (SUPER ADMIN) -->
+                <div onclick="redirecionarAmbienteDono('admin')" style="background: #ffffff; border: 2px solid #3b82f6; border-radius: 12px; padding: 1.15rem; cursor: pointer; display: flex; align-items: center; gap: 1rem; transition: all 0.2s; box-shadow: 0 4px 12px rgba(59,130,246,0.08);" onmouseover="this.style.transform='translateY(-2px)'; this.style.borderColor='#2563eb';" onmouseout="this.style.transform='none'; this.style.borderColor='#3b82f6';">
+                    <div style="width: 48px; height: 48px; border-radius: 10px; background: #0f172a; color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                        👑
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; font-size: 1rem; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                            <span>Central do Dono</span>
+                            <span style="background: #eff6ff; color: #2563eb; font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;">Super Admin SaaS</span>
+                        </div>
+                        <div style="font-size: 0.82rem; color: #64748b; margin-top: 3px; line-height: 1.3;">
+                            Painel executivo: métricas de faturamento (MRR), gestão e aprovação de pet shops, planos e configurações da plataforma.
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" style="color: #3b82f6; width: 20px; height: 20px;"></i>
+                </div>
+
+                <!-- OPÇÃO 2: PAINEL DO PET SHOP (OPERACIONAL) -->
+                <div onclick="redirecionarAmbienteDono('loja')" style="background: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 1.15rem; cursor: pointer; display: flex; align-items: center; gap: 1rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.04);" onmouseover="this.style.transform='translateY(-2px)'; this.style.borderColor='#10b981';" onmouseout="this.style.transform='none'; this.style.borderColor='#e2e8f0';">
+                    <div style="width: 48px; height: 48px; border-radius: 10px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                        🏪
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; font-size: 1rem; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                            <span>Painel do Pet Shop</span>
+                            <span style="background: #ecfdf5; color: #059669; font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;">Operacional</span>
+                        </div>
+                        <div style="font-size: 0.82rem; color: #64748b; margin-top: 3px; line-height: 1.3;">
+                            Acessar a loja: Banho & Tosa (Kanban), Agenda, Vendas no PDV, Clientes, Pets e Fechamento de Caixa.
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" style="color: #10b981; width: 20px; height: 20px;"></i>
+                </div>
+
+            </div>
+
+            <!-- Rodapé com Dica -->
+            <div style="padding: 0.85rem 1.5rem; background: #f1f5f9; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; color: #64748b;">
+                <span>💡 Você pode alternar entre os dois painéis a qualquer momento com 1 clique.</span>
+            </div>
+        </div>
+    `;
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function redirecionarAmbienteDono(destino) {
+    if (destino === 'admin') {
+        showToast('👑 Abrindo a Central do Dono...', 'success');
+        setTimeout(() => {
+            window.location.href = 'admin.html';
+        }, 300);
+    } else {
+        showToast('🏪 Abrindo o Painel Operacional do Pet Shop...', 'success');
+        // Se ainda não tiver loja ativa, ativa a loja padrão/demo para ter dados
+        const currentTenant = localStorage.getItem('ps_current_tenant_id');
+        if (!currentTenant || currentTenant === 'dono_flavio') {
+            localStorage.setItem('ps_current_tenant_id', 'default');
+            localStorage.setItem('ps_current_tenant_name', 'PetShop Manager Demo');
+        }
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 300);
+    }
+}
+window.redirecionarAmbienteDono = redirecionarAmbienteDono;
+window.exibirModalEscolhaAmbienteDono = exibirModalEscolhaAmbienteDono;
 
 // Processar formulário de Cadastro de Novo Pet Shop com Hash Seguro
 async function handleCadastroSubmit(event) {

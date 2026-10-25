@@ -480,9 +480,12 @@
                     <td style="font-size:0.8rem; color:var(--adm-text-muted);">
                         ${loja.criadoEm ? new Date(loja.criadoEm).toLocaleDateString('pt-BR') : '-'}
                     </td>
-                    <td style="text-align:right;">
-                        <button class="btn btn-secondary btn-sm" onclick="abrirDossieLoja('${loja.id}')" title="Abrir Dossiê 360° da Loja" style="padding:4px 10px; font-size:0.78rem;">
-                            <i data-lucide="eye"></i> Dossiê
+                    <td style="text-align:right; white-space:nowrap;">
+                        <button class="btn btn-secondary btn-sm" onclick="acessarLojaDireto('${loja.id}')" title="Entrar no Pet Shop desta loja" style="padding:4px 9px; font-size:0.78rem; color:#10b981; border-color:rgba(16,185,129,0.3); margin-right:4px;">
+                            <i data-lucide="external-link" style="width:13px;height:13px;"></i> Entrar
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="abrirDossieLoja('${loja.id}')" title="Abrir Dossiê 360° da Loja" style="padding:4px 9px; font-size:0.78rem;">
+                            <i data-lucide="eye" style="width:13px;height:13px;"></i> Dossiê
                         </button>
                     </td>
                 </tr>
@@ -694,7 +697,29 @@
             startedAt: new Date().toISOString()
         }));
 
+        // Ativa os dados específicos desta loja
+        localStorage.setItem('ps_current_tenant_id', loja.id);
+        localStorage.setItem('ps_current_tenant_name', loja.nome);
+
         // Redireciona para a home operacional do petshop
+        window.location.href = 'index.html';
+    };
+
+    window.acessarLojaDireto = function (tenantId) {
+        const loja = state.tenants.find(t => t.id === tenantId);
+        if (!loja) return;
+
+        localStorage.setItem(SAAS_STORAGE.IMPERSONATION, JSON.stringify({
+            tenantId: loja.id,
+            tenantNome: loja.nome,
+            plano: loja.plano,
+            startedAt: new Date().toISOString()
+        }));
+
+        localStorage.setItem('ps_current_tenant_id', loja.id);
+        localStorage.setItem('ps_current_tenant_name', loja.nome);
+
+        registrarAuditoria('IMPERSONATE_SESSION_START', loja.nome, 'Acesso direto master à loja realizado.');
         window.location.href = 'index.html';
     };
 

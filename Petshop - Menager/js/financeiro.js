@@ -7,6 +7,7 @@
 let currentFinanceTab = 'tab-resumo';
 let chartReceitasDespesasInstance = null;
 let chartDespesasCategoriaInstance = null;
+let chartProjecaoInstance = null;
 
 // Estados de paginação e filtros
 let receitasPage = 1;
@@ -126,6 +127,8 @@ function switchFinanceTab(tabId) {
     // Executar renderização correspondente
     if (tabId === 'tab-resumo') {
         renderResumoTab();
+    } else if (tabId === 'tab-projecao') {
+        renderProjecaoTab();
     } else if (tabId === 'tab-receitas') {
         renderReceitasTable();
     } else if (tabId === 'tab-despesas') {
@@ -251,6 +254,109 @@ function renderResumoTab() {
         if (endDate && d > endDate) return false;
         return true;
     });
+
+    // ====================================================
+    // CÁLCULOS DO PAINEL DE CAIXA REAL & GASTOS PREVISTOS
+    // ====================================================
+    // 1. Saldo Geral Acumulado da Empresa (histórico completo de receitas menos despesas pagas)
+    let saldoDinheiro = 0;
+    let saldoPix = 0;
+    let saldoCartoes = 0;
+
+    revenues.forEach(r => {
+        const val = Number(r.valor) || 0;
+        const forma = (r.formaPagamento || '').toLowerCase();
+        if (forma.includes('dinheiro')) {
+            saldoDinheiro += val;
+        } else if (forma.includes('pix')) {
+            saldoPix += val;
+        } else if (forma.includes('cart') || forma.includes('débito') || forma.includes('crédito')) {
+            saldoCartoes += val;
+        } else {
+            saldoPix += val;
+        }
+    });
+
+    expenses.forEach(e => {
+        const status = e.status || 'pago';
+        if (status === 'pago') {
+            const val = Number(e.valor) || 0;
+            const forma = (e.formaPagamento || '').toLowerCase();
+            if (forma.includes('dinheiro')) {
+                saldoDinheiro -= val;
+            } else if (forma.includes('pix') || forma.includes('banco') || forma.includes('boleto')) {
+                saldoPix -= val;
+            } else if (forma.includes('cart')) {
+                saldoCartoes -= val;
+            } else {
+                saldoPix -= val;
+            }
+        }
+    });
+
+    const saldoTotalCaixa = saldoDinheiro + saldoPix + saldoCartoes;
+
+    // 2. Gastos Previstos (Despesas com status 'pendente' ou com vencimento futuro neste mês)
+    const hojeStr = new Date().toISOString().split('T')[0];
+    const em7Dias = new Date();
+    em7Dias.setDate(em7Dias.getDate() + 7);
+    const em7DiasStr = em7Dias.toISOString().split('T')[0];
+
+    const hojeObj = new Date();
+    const anoAtual = hojeObj.getFullYear();
+    const mesAtualNum = hojeObj.getMonth();
+
+    let totalGastosPrevistosMes = 0;
+    let totalVencendo7Dias = 0;
+    let qtdVencendo7Dias = 0;
+
+    expenses.forEach(e => {
+        const isPendente = (e.status === 'pendente') || (!e.status && e.data > hojeStr);
+        if (isPendente) {
+            const val = Number(e.valor) || 0;
+            if (e.data) {
+                const ed = new Date(e.data + 'T00:00:00');
+                if (ed.getFullYear() === anoAtual && ed.getMonth() === mesAtualNum) {
+                    totalGastosPrevistosMes += val;
+                }
+                if (e.data >= hojeStr && e.data <= em7DiasStr) {
+                    totalVencendo7Dias += val;
+                    qtdVencendo7Dias++;
+                }
+            }
+        }
+    });
+
+    // Se ainda não houver contas pendentes cadastradas para este mês, calcula a estimativa de contas fixas recorrentes
+    if (totalGastosPrevistosMes === 0) {
+        expenses.filter(e => e.recorrente).forEach(e => {
+            totalGastosPrevistosMes += Number(e.valor) || 0;
+        });
+    }
+
+    // 3. Saldo Real Livre = Saldo Total em Caixa - Gastos Previstos
+    const saldoRealLivre = saldoTotalCaixa - totalGastosPrevistosMes;
+
+    // Atualiza os elementos no DOM
+    const elCaixaTotal = document.getElementById('caixa-saldo-total');
+    const elCaixaDinheiro = document.getElementById('caixa-saldo-dinheiro');
+    const elCaixaPix = document.getElementById('caixa-saldo-pix');
+    const elCaixaCartoes = document.getElementById('caixa-saldo-cartoes');
+    const elGastosPrevistos = document.getElementById('kpi-gastos-previstos');
+    const elVencendo7Dias = document.getElementById('kpi-vencendo-7dias');
+    const elSaldoRealLivre = document.getElementById('kpi-saldo-real-livre');
+
+    if (elCaixaTotal) elCaixaTotal.textContent = formatCurrency(saldoTotalCaixa);
+    if (elCaixaDinheiro) elCaixaDinheiro.textContent = formatCurrency(saldoDinheiro);
+    if (elCaixaPix) elCaixaPix.textContent = formatCurrency(saldoPix);
+    if (elCaixaCartoes) elCaixaCartoes.textContent = formatCurrency(saldoCartoes);
+
+    if (elGastosPrevistos) elGastosPrevistos.textContent = formatCurrency(totalGastosPrevistosMes);
+    if (elVencendo7Dias) elVencendo7Dias.textContent = `${formatCurrency(totalVencendo7Dias)} (${qtdVencendo7Dias} contas)`;
+    if (elSaldoRealLivre) {
+        elSaldoRealLivre.textContent = formatCurrency(saldoRealLivre);
+        elSaldoRealLivre.style.color = saldoRealLivre >= 0 ? '#34d399' : '#f87171';
+    }
 
     // Cálculos de Totais
     const totalReceitas = filteredRevenues.reduce((acc, cur) => acc + (Number(cur.valor) || 0), 0);
@@ -434,6 +540,399 @@ function renderChartDespesasCategoria(expenses) {
         }
     });
 }
+
+// ==========================================
+// ABA: PROJEÇÃO FUTURA DOS MESES (FLUXO INTELIGENTE)
+// ==========================================
+function renderProjecaoTab() {
+    const revenues = DB.get(STORAGE_KEYS.REVENUES) || [];
+    const expenses = DB.get(STORAGE_KEYS.EXPENSES) || [];
+
+    // 1. Saldo Real Acumulado em Caixa hoje
+    const totalReceitasPagas = revenues.reduce((acc, r) => acc + (Number(r.valor) || 0), 0);
+    const totalDespesasPagas = expenses
+        .filter(e => (e.status || 'pago') === 'pago')
+        .reduce((acc, e) => acc + (Number(e.valor) || 0), 0);
+    
+    const saldoAcumuladoAtual = totalReceitasPagas - totalDespesasPagas;
+
+    // 2. Média histórica de faturamento mensal dos últimos 3 meses
+    const hoje = new Date();
+    const mesesPassados = [];
+    for (let i = 2; i >= 0; i--) {
+        const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+        const y = d.getFullYear();
+        const m = d.getMonth();
+        const recsMes = revenues.filter(r => {
+            if (!r.data) return false;
+            const rd = new Date(r.data + 'T00:00:00');
+            return rd.getFullYear() === y && rd.getMonth() === m;
+        });
+        const total = recsMes.reduce((acc, r) => acc + (Number(r.valor) || 0), 0);
+        mesesPassados.push(total);
+    }
+    const somaHistorico = mesesPassados.reduce((a, b) => a + b, 0);
+    const mediaFaturamentoMensal = mesesPassados.length > 0 ? (somaHistorico / mesesPassados.length) : 8000;
+    const faturamentoProjetadoBase = Math.max(mediaFaturamentoMensal, 6000);
+
+    // 3. Despesas Fixas Recorrentes Mensais
+    const despesasRecorrentes = expenses.filter(e => e.recorrente === true);
+    const mapFixas = new Map();
+    despesasRecorrentes.forEach(d => {
+        const key = (d.descricao || '').trim().toLowerCase();
+        if (!mapFixas.has(key) || Number(d.valor) > mapFixas.get(key).valor) {
+            mapFixas.set(key, d);
+        }
+    });
+    let custoFixoMensal = 0;
+    mapFixas.forEach(d => { custoFixoMensal += Number(d.valor) || 0; });
+    if (custoFixoMensal === 0) {
+        custoFixoMensal = Math.min(faturamentoProjetadoBase * 0.60, 4200);
+    }
+
+    // 4. Retiradas de Lucro acumuladas
+    const totalRetiradas = expenses
+        .filter(e => (e.categoria || '').includes('Retirada') || (e.categoria || '').includes('Pró-Labore'))
+        .reduce((acc, e) => acc + (Number(e.valor) || 0), 0);
+
+    // Autonomia em meses
+    const mesesAutonomia = custoFixoMensal > 0 ? (saldoAcumuladoAtual / custoFixoMensal) : 0;
+
+    // Atualiza KPIs da Reserva
+    const elReserva = document.getElementById('proj-reserva-atual');
+    const elCustoFixo = document.getElementById('proj-custo-fixo');
+    const elAutonomia = document.getElementById('proj-meses-autonomia');
+    const elRetiradas = document.getElementById('proj-total-retiradas');
+
+    if (elReserva) elReserva.textContent = formatCurrency(saldoAcumuladoAtual);
+    if (elCustoFixo) elCustoFixo.textContent = formatCurrency(custoFixoMensal);
+    if (elAutonomia) elAutonomia.textContent = `${Math.max(0, mesesAutonomia).toFixed(1).replace('.', ',')} meses`;
+    if (elRetiradas) elRetiradas.textContent = formatCurrency(totalRetiradas);
+
+    // 5. Montagem da Projeção de 4 Meses: Mês Atual + 3 Meses Futuros
+    const dadosProjecao = [];
+    let saldoRollover = saldoAcumuladoAtual;
+
+    for (let i = 0; i < 4; i++) {
+        const d = new Date(hoje.getFullYear(), hoje.getMonth() + i, 1);
+        const nomeMes = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        const labelMes = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
+
+        let saldoInicial = saldoRollover;
+        let entradas = 0;
+        let saidas = 0;
+        let isAtual = (i === 0);
+
+        if (isAtual) {
+            const diasNoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+            const diaHoje = hoje.getDate();
+            const recsAtual = revenues.filter(r => {
+                if (!r.data) return false;
+                const rd = new Date(r.data + 'T00:00:00');
+                return rd.getFullYear() === hoje.getFullYear() && rd.getMonth() === hoje.getMonth();
+            });
+            const entradasReais = recsAtual.reduce((acc, r) => acc + (Number(r.valor) || 0), 0);
+            
+            entradas = entradasReais > 0 
+                ? (entradasReais / Math.max(1, diaHoje)) * diasNoMes 
+                : faturamentoProjetadoBase;
+
+            const despsAtual = expenses.filter(e => {
+                if (!e.data) return false;
+                const ed = new Date(e.data + 'T00:00:00');
+                return ed.getFullYear() === hoje.getFullYear() && ed.getMonth() === hoje.getMonth();
+            });
+            const saidasMes = despsAtual.reduce((acc, e) => acc + (Number(e.valor) || 0), 0);
+            saidas = Math.max(saidasMes, custoFixoMensal);
+        } else {
+            entradas = faturamentoProjetadoBase;
+            const boletosFuturos = expenses.filter(e => {
+                if (!e.data) return false;
+                const ed = new Date(e.data + 'T00:00:00');
+                return ed.getFullYear() === d.getFullYear() && ed.getMonth() === d.getMonth();
+            });
+            const valorBoletos = boletosFuturos.reduce((acc, e) => acc + (Number(e.valor) || 0), 0);
+            saidas = Math.max(custoFixoMensal, valorBoletos);
+        }
+
+        const resultadoMes = entradas - saidas;
+        const saldoFinal = saldoInicial + resultadoMes;
+        saldoRollover = saldoFinal;
+
+        dadosProjecao.push({
+            label: isAtual ? `${labelMes} (Em Andamento)` : `${labelMes} (Projetado)`,
+            isAtual,
+            saldoInicial,
+            entradas,
+            saidas,
+            resultadoMes,
+            saldoFinal
+        });
+    }
+
+    // Renderizar Tabela de Projeção
+    const tbody = document.getElementById('tabela-projecao-body');
+    if (tbody) {
+        tbody.innerHTML = dadosProjecao.map(row => {
+            const isPositivo = row.resultadoMes >= 0;
+            const margem = row.entradas > 0 ? (row.resultadoMes / row.entradas) : 0;
+            
+            let saudeBadge = '';
+            if (row.saldoFinal < 0 || row.resultadoMes < -500) {
+                saudeBadge = `<span class="badge badge-danger">🔴 Risco de Negativo</span>`;
+            } else if (margem < 0.15) {
+                saudeBadge = `<span class="badge badge-warning">🟡 Margem Estreita</span>`;
+            } else {
+                saudeBadge = `<span class="badge badge-success">🟢 Mês Seguro / Lucrativo</span>`;
+            }
+
+            return `
+                <tr style="${row.isAtual ? 'background: rgba(59, 130, 246, 0.05); font-weight: 600;' : ''}">
+                    <td>
+                        <div style="font-weight: 700; color: var(--text-primary);">${row.label}</div>
+                        ${row.isAtual ? '<span class="badge badge-info" style="font-size:0.68rem; padding:1px 6px;">Mês Atual</span>' : ''}
+                    </td>
+                    <td style="text-align: right; color: var(--text-secondary);">${formatCurrency(row.saldoInicial)}</td>
+                    <td style="text-align: right; color: var(--success); font-weight: 600;">+ ${formatCurrency(row.entradas)}</td>
+                    <td style="text-align: right; color: var(--danger); font-weight: 600;">- ${formatCurrency(row.saidas)}</td>
+                    <td style="text-align: right; font-weight: 700; color: ${isPositivo ? 'var(--success)' : 'var(--danger)'};">
+                        ${isPositivo ? '+' : ''}${formatCurrency(row.resultadoMes)}
+                    </td>
+                    <td style="text-align: right; font-weight: 800; font-size: 1rem; color: #2563eb;">
+                        ${formatCurrency(row.saldoFinal)}
+                    </td>
+                    <td style="text-align: center;">${saudeBadge}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    renderChartProjecao(dadosProjecao);
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+window.renderProjecaoTab = renderProjecaoTab;
+
+// Gráfico de Projeção (Chart.js)
+function renderChartProjecao(dados) {
+    const canvas = document.getElementById('chartProjecaoMeses');
+    if (!canvas) return;
+
+    if (chartProjecaoInstance) {
+        chartProjecaoInstance.destroy();
+    }
+
+    const labels = dados.map(d => d.label.split(' ')[0]);
+    const saldosAcumulados = dados.map(d => Math.round(d.saldoFinal));
+    const receitas = dados.map(d => Math.round(d.entradas));
+    const despesas = dados.map(d => Math.round(d.saidas));
+
+    chartProjecaoInstance = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    type: 'line',
+                    label: '🏁 Saldo Acumulado em Caixa (R$)',
+                    data: saldosAcumulados,
+                    borderColor: '#38bdf8',
+                    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#38bdf8',
+                    pointRadius: 5,
+                    fill: false,
+                    tension: 0.3,
+                    yAxisID: 'y'
+                },
+                {
+                    type: 'bar',
+                    label: 'Entradas Previstas (R$)',
+                    data: receitas,
+                    backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                    borderRadius: 6,
+                    yAxisID: 'y'
+                },
+                {
+                    type: 'bar',
+                    label: 'Gastos Previstos (R$)',
+                    data: despesas,
+                    backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                    borderRadius: 6,
+                    yAxisID: 'y'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        boxWidth: 12,
+                        font: { family: "'Inter', sans-serif", size: 12 }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${formatCurrency(context.raw)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(val) {
+                            return 'R$ ' + val.toLocaleString('pt-BR');
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// ==========================================
+// OPERAÇÕES DE CAIXA: GAVETA, SANGRIA E LUCRO
+// ==========================================
+function abrirModalSuprimento() {
+    openModal('modal-suprimento');
+}
+window.abrirModalSuprimento = abrirModalSuprimento;
+
+function salvarSuprimento(event) {
+    event.preventDefault();
+    const valor = parseFloat(document.getElementById('suprimento-valor').value);
+    const motivo = (document.getElementById('suprimento-motivo').value || '').trim() || 'Fundo de Troco / Suprimento';
+
+    if (isNaN(valor) || valor <= 0) {
+        showToast('Informe um valor válido maior que zero.', 'warning');
+        return;
+    }
+
+    const revenues = DB.get(STORAGE_KEYS.REVENUES) || [];
+    const novoSuprimento = {
+        id: DB.generateId(),
+        data: new Date().toISOString().split('T')[0],
+        descricao: `[Suprimento de Gaveta] ${motivo}`,
+        categoria: 'Suprimento de Caixa',
+        valor: valor,
+        formaPagamento: 'Dinheiro',
+        referencia: 'suprimento_' + Date.now()
+    };
+    revenues.unshift(novoSuprimento);
+    DB.save(STORAGE_KEYS.REVENUES, revenues);
+
+    closeModal('modal-suprimento');
+    document.getElementById('form-suprimento').reset();
+    showToast(`Troco de ${formatCurrency(valor)} adicionado à gaveta com sucesso!`, 'success');
+    
+    renderResumoTab();
+    renderReceitasTable();
+    if (currentFinanceTab === 'tab-projecao') renderProjecaoTab();
+}
+window.salvarSuprimento = salvarSuprimento;
+
+function abrirModalSangria() {
+    openModal('modal-sangria');
+}
+window.abrirModalSangria = abrirModalSangria;
+
+function salvarSangria(event) {
+    event.preventDefault();
+    const valor = parseFloat(document.getElementById('sangria-valor').value);
+    const motivo = (document.getElementById('sangria-motivo').value || '').trim() || 'Sangria de Caixa';
+
+    if (isNaN(valor) || valor <= 0) {
+        showToast('Informe um valor válido maior que zero.', 'warning');
+        return;
+    }
+
+    const expenses = DB.get(STORAGE_KEYS.EXPENSES) || [];
+    const novaSangria = {
+        id: DB.generateId(),
+        data: new Date().toISOString().split('T')[0],
+        descricao: `[Sangria de Gaveta] ${motivo}`,
+        categoria: 'Sangria de Caixa',
+        valor: valor,
+        formaPagamento: 'Dinheiro',
+        status: 'pago',
+        recorrente: false
+    };
+    expenses.unshift(novaSangria);
+    DB.save(STORAGE_KEYS.EXPENSES, expenses);
+
+    closeModal('modal-sangria');
+    document.getElementById('form-sangria').reset();
+    showToast(`Sangria de ${formatCurrency(valor)} registrada com sucesso!`, 'success');
+
+    renderResumoTab();
+    renderDespesasTable();
+    if (currentFinanceTab === 'tab-projecao') renderProjecaoTab();
+}
+window.salvarSangria = salvarSangria;
+
+function abrirModalRetiradaLucro() {
+    openModal('modal-retirada-lucro');
+}
+window.abrirModalRetiradaLucro = abrirModalRetiradaLucro;
+
+function salvarRetiradaLucro(event) {
+    event.preventDefault();
+    const valor = parseFloat(document.getElementById('retirada-valor').value);
+    const favorecido = (document.getElementById('retirada-favorecido').value || '').trim() || 'Flávio Filho (Dono)';
+    const origem = document.getElementById('retirada-origem').value || 'Pix';
+
+    if (isNaN(valor) || valor <= 0) {
+        showToast('Informe um valor de retirada válido.', 'warning');
+        return;
+    }
+
+    const expenses = DB.get(STORAGE_KEYS.EXPENSES) || [];
+    const novaRetirada = {
+        id: DB.generateId(),
+        data: new Date().toISOString().split('T')[0],
+        descricao: `[Retirada de Lucro / Pró-labore] ${favorecido}`,
+        categoria: 'Pró-Labore / Retirada de Lucro',
+        valor: valor,
+        formaPagamento: origem,
+        status: 'pago',
+        recorrente: false
+    };
+    expenses.unshift(novaRetirada);
+    DB.save(STORAGE_KEYS.EXPENSES, expenses);
+
+    closeModal('modal-retirada-lucro');
+    document.getElementById('form-retirada-lucro').reset();
+    showToast(`Retirada de lucro de ${formatCurrency(valor)} efetuada com sucesso!`, 'success');
+
+    renderResumoTab();
+    renderDespesasTable();
+    if (currentFinanceTab === 'tab-projecao') renderProjecaoTab();
+}
+window.salvarRetiradaLucro = salvarRetiradaLucro;
+
+function marcarDespesaComoPaga(id) {
+    let expenses = DB.get(STORAGE_KEYS.EXPENSES) || [];
+    const idx = expenses.findIndex(e => e.id === id);
+    if (idx !== -1) {
+        expenses[idx].status = 'pago';
+        expenses[idx].dataPagamento = new Date().toISOString().split('T')[0];
+        DB.save(STORAGE_KEYS.EXPENSES, expenses);
+        showToast(`Conta "${expenses[idx].descricao}" marcada como paga!`, 'success');
+        renderDespesasTable();
+        renderResumoTab();
+        if (currentFinanceTab === 'tab-projecao') renderProjecaoTab();
+    }
+}
+window.marcarDespesaComoPaga = marcarDespesaComoPaga;
 
 // ==========================================
 // ABA 2: RECEITAS
@@ -624,11 +1123,14 @@ function renderDespesasTable() {
     const search = (document.getElementById('desp-search')?.value || '').toLowerCase().trim();
     const categoria = document.getElementById('desp-categoria')?.value || '';
     const recorrente = document.getElementById('desp-recorrente')?.value || '';
+    const statusFiltro = document.getElementById('desp-status')?.value || '';
     const dataInicio = document.getElementById('desp-data-inicio')?.value || '';
     const dataFim = document.getElementById('desp-data-fim')?.value || '';
 
     // Filtrar despesas
     let filtered = expenses.filter(item => {
+        const itemStatus = item.status || 'pago';
+        if (statusFiltro && itemStatus !== statusFiltro) return false;
         if (search && !(item.descricao || '').toLowerCase().includes(search)) return false;
         if (categoria && item.categoria !== categoria) return false;
         if (recorrente === 'recorrente' && !item.recorrente) return false;
@@ -655,7 +1157,7 @@ function renderDespesasTable() {
     if (paginated.data.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6">
+                <td colspan="7">
                     <div class="empty-state">
                         <i data-lucide="receipt"></i>
                         <p>Nenhuma despesa cadastrada</p>
@@ -667,6 +1169,12 @@ function renderDespesasTable() {
     } else {
         tbody.innerHTML = paginated.data.map(item => {
             const isRec = Boolean(item.recorrente);
+            const status = item.status || 'pago';
+            const isPago = status === 'pago';
+            const statusBadge = isPago 
+                ? `<span class="badge badge-success" style="font-size:0.75rem;"><i data-lucide="check-circle" style="width:11px;height:11px;margin-right:3px;"></i> Pago</span>`
+                : `<span class="badge badge-warning" style="font-size:0.75rem;"><i data-lucide="clock" style="width:11px;height:11px;margin-right:3px;"></i> A Pagar</span>`;
+
             return `
                 <tr>
                     <td><strong style="color: var(--text-primary);">${formatDate(item.data)}</strong></td>
@@ -675,6 +1183,9 @@ function renderDespesasTable() {
                     </td>
                     <td>
                         <span class="badge badge-neutral">${item.categoria || 'Geral'}</span>
+                    </td>
+                    <td style="text-align: center;">
+                        ${statusBadge}
                     </td>
                     <td style="text-align: center;">
                         ${isRec 
@@ -686,7 +1197,12 @@ function renderDespesasTable() {
                         - ${formatCurrency(item.valor)}
                     </td>
                     <td>
-                        <div class="table-actions" style="justify-content: center;">
+                        <div class="table-actions" style="justify-content: center; gap: 4px;">
+                            ${!isPago ? `
+                                <button class="btn btn-sm" style="background:#16a34a; color:#fff; border:none; padding:2px 8px; font-size:0.72rem; font-weight:700; border-radius:4px; display:inline-flex; align-items:center; gap:3px; cursor:pointer;" title="Marcar como Pago" onclick="marcarDespesaComoPaga('${item.id}')">
+                                    <i data-lucide="check" style="width:12px;height:12px;"></i> Pagar
+                                </button>
+                            ` : ''}
                             <button class="btn-icon" title="Editar Despesa" onclick="openExpenseModal('${item.id}')">
                                 <i data-lucide="edit-2"></i>
                             </button>
@@ -738,6 +1254,12 @@ function openExpenseModal(expenseId = null) {
             document.getElementById('despesa-valor').value = item.valor || '';
             document.getElementById('despesa-data').value = item.data || '';
             document.getElementById('despesa-recorrente').checked = Boolean(item.recorrente);
+            if (document.getElementById('despesa-status')) {
+                document.getElementById('despesa-status').value = item.status || 'pago';
+            }
+            if (document.getElementById('despesa-forma-pagamento')) {
+                document.getElementById('despesa-forma-pagamento').value = item.formaPagamento || 'Pix';
+            }
 
             if (titleEl) titleEl.textContent = 'Editar Despesa';
             if (saveBtn) saveBtn.textContent = 'Salvar Alterações';
@@ -747,6 +1269,9 @@ function openExpenseModal(expenseId = null) {
         if (saveBtn) saveBtn.textContent = 'Salvar Despesa';
         // Data atual como padrão
         document.getElementById('despesa-data').value = new Date().toISOString().split('T')[0];
+        if (document.getElementById('despesa-status')) {
+            document.getElementById('despesa-status').value = 'pago';
+        }
     }
 
     openModal('modal-despesa');
@@ -761,6 +1286,8 @@ function saveExpense(event) {
     const valor = parseFloat(document.getElementById('despesa-valor').value);
     const data = document.getElementById('despesa-data').value;
     const recorrente = document.getElementById('despesa-recorrente').checked;
+    const status = document.getElementById('despesa-status') ? document.getElementById('despesa-status').value : 'pago';
+    const formaPagamento = document.getElementById('despesa-forma-pagamento') ? document.getElementById('despesa-forma-pagamento').value : 'Pix';
 
     if (!descricao || isNaN(valor) || valor <= 0 || !data) {
         showToast('Preencha todos os campos obrigatórios corretamente.', 'warning');
@@ -779,7 +1306,9 @@ function saveExpense(event) {
                 categoria,
                 valor,
                 data,
-                recorrente
+                recorrente,
+                status,
+                formaPagamento
             };
             showToast('Despesa atualizada com sucesso!', 'success');
         }
@@ -791,7 +1320,9 @@ function saveExpense(event) {
             categoria,
             valor,
             data,
-            recorrente
+            recorrente,
+            status,
+            formaPagamento
         };
         expenses.unshift(newExpense);
         showToast('Despesa cadastrada com sucesso!', 'success');
@@ -802,8 +1333,9 @@ function saveExpense(event) {
 
     // Atualizar visualizações
     renderDespesasTable();
-    if (currentFinanceTab === 'tab-resumo') {
-        renderResumoTab();
+    renderResumoTab();
+    if (currentFinanceTab === 'tab-projecao') {
+        renderProjecaoTab();
     }
 }
 
